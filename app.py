@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from streamlit_option_menu import option_menu
 
@@ -16,11 +17,8 @@ if escolha == "🏠 Início":
         """,
         unsafe_allow_html=True
     )
-    st.image(
-        "https://images.unsplash.com/photo-1624378444962-3c80e6f1e03e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-        use_column_width=True,
-        caption=None,
-    )
+    img_path = os.path.join(os.path.dirname(__file__), "fundo_inicio.png")
+    st.image(img_path, use_column_width=True, caption=None)
     st.markdown(
         """
         <div style='text-align: center; font-size: 1.3em; margin-top: 1em; margin-bottom: 2em;'>
