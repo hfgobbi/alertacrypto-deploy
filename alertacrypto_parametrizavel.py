@@ -5,10 +5,17 @@ import time
 import json
 import os
 
-# Configurações principais
+# Configurações
 api_key = "6039606"
 numero_celular = "556781430574"
 ARQUIVO_ZONAS = "zonas.json"
+
+# Mapear ativos para CoinGecko
+mapa_ids = {
+    "BTCUSDT": "bitcoin",
+    "ETHUSDT": "ethereum",
+    "SOLUSDT": "solana"
+}
 
 # Carregar zonas salvas
 def carregar_zonas():
@@ -37,27 +44,35 @@ def enviar_mensagem(mensagem):
     except:
         pass
 
-def buscar_dados():
+def buscar_dados_coingecko():
     try:
-        r = requests.get('https://api.binance.com/api/v3/ticker/price', timeout=10)
+        url = "https://api.coingecko.com/api/v3/simple/price"
+        ids = ",".join(mapa_ids.values())
+        params = {"ids": ids, "vs_currencies": "usd"}
+        r = requests.get(url, params=params, timeout=10)
         if r.status_code == 200:
-            return r.json()
+            preco_raw = r.json()
+            dados = []
+            for simbolo, cg_id in mapa_ids.items():
+                preco = preco_raw[cg_id]["usd"]
+                dados.append({"symbol": simbolo, "price": preco})
+            return dados
         else:
-            st.error(f"❌ Erro HTTP {r.status_code} ao buscar dados da Binance")
+            st.error(f"❌ CoinGecko respondeu com status: {r.status_code}")
             return []
     except Exception as e:
-        st.error(f"❌ Falha ao conectar à API da Binance: {e}")
+        st.error(f"❌ Erro ao conectar à CoinGecko: {e}")
         return []
 
-# Auto-update a cada 10s
+# Atualização automática
 if "ultima_atualizacao" not in st.session_state:
     st.session_state.ultima_atualizacao = time.time()
 elif time.time() - st.session_state.ultima_atualizacao > 10:
     st.session_state.ultima_atualizacao = time.time()
     st.rerun()
 
-st.set_page_config(page_title="Alerta Cripto", layout="wide")
-st.title("📊 Alerta Cripto com Atualização + Debug")
+st.set_page_config(page_title="Alerta Cripto com CoinGecko", layout="wide")
+st.title("📊 Alerta Cripto (CoinGecko) com Atualização Automática")
 
 zonas = carregar_zonas()
 
@@ -75,12 +90,12 @@ with st.expander("⚙️ Parâmetros de Zonas"):
             st.success("Zonas salvas com sucesso!")
 
 st.subheader("📡 Situação Atual das Criptos")
-dados = buscar_dados()
+dados = buscar_dados_coingecko()
 if "enviadas" not in st.session_state:
     st.session_state.enviadas = set()
 
 if not dados:
-    st.warning("⚠️ Nenhum dado carregado. Verifique se a API da Binance está acessível nesse ambiente.")
+    st.warning("⚠️ Nenhum dado carregado. Verifique conexão com CoinGecko.")
 
 for item in dados:
     simbolo = item["symbol"]
@@ -104,4 +119,4 @@ for item in dados:
 
         st.markdown(f"**{simbolo}**: {preco:.2f} USDT | Suporte: {suporte} | Resistência: {resistencia} → {status}")
 
-st.info("🔁 Atualização automática a cada 10 segundos. Erros de conexão agora são exibidos no painel.")
+st.info("🔁 Dados obtidos via CoinGecko. Atualização automática a cada 10 segundos.")
