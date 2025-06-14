@@ -10,7 +10,7 @@ api_key = "6039606"
 numero_celular = "556781430574"
 ARQUIVO_ZONAS = "zonas.json"
 
-# Carregar ou inicializar zonas
+# Carregar zonas salvas
 def carregar_zonas():
     if os.path.exists(ARQUIVO_ZONAS):
         with open(ARQUIVO_ZONAS, "r") as f:
@@ -25,25 +25,27 @@ def salvar_zonas(zonas):
     with open(ARQUIVO_ZONAS, "w") as f:
         json.dump(zonas, f, indent=4)
 
-# Enviar mensagem WhatsApp
 def enviar_mensagem(mensagem):
     if not mensagem.strip():
-        print("⚠️ Mensagem vazia — não enviada.")
         return
-    print(">>> Enviando mensagem:", mensagem)
     url = "https://api.callmebot.com/whatsapp.php"
     params = {"phone": numero_celular, "text": mensagem, "apikey": api_key}
     try:
         r = requests.get(url, params=params, timeout=10)
         if r.status_code == 200 and "queued" in r.text.lower():
-            print("✅ Mensagem enviada com sucesso!")
-        else:
-            print("❌ Erro ao enviar:", r.status_code, r.text)
-    except Exception as e:
-        print("❌ Erro:", e)
+            print("✅ Enviada:", mensagem)
+    except:
+        pass
 
-# Interface Streamlit
-st.set_page_config(page_title="Alerta Cripto - Parametrização", layout="wide")
+def buscar_dados():
+    try:
+        r = requests.get('https://api.binance.com/api/v3/ticker/price', timeout=10)
+        return r.json() if r.status_code == 200 else []
+    except:
+        return []
+
+# Streamlit Interface
+st.set_page_config(page_title="Alerta Cripto", layout="wide")
 st.title("📊 Alerta Cripto com Parametrização de Zonas")
 
 zonas = carregar_zonas()
@@ -61,46 +63,34 @@ with st.expander("⚙️ Parâmetros de Zonas"):
             salvar_zonas(zonas)
             st.success("Zonas salvas com sucesso!")
 
-st.divider()
-st.subheader("📡 Monitoramento de Rompimentos")
+st.subheader("📡 Situação Atual das Criptos")
+dados = buscar_dados()
+if "enviadas" not in st.session_state:
+    st.session_state.enviadas = set()
 
-placeholder = st.empty()
-enviadas = set()
+for item in dados:
+    simbolo = item["symbol"]
+    if simbolo in zonas:
+        preco = float(item["price"])
+        suporte = zonas[simbolo]["suporte"]
+        resistencia = zonas[simbolo]["resistencia"]
+        status = "🟡 Dentro da zona"
 
-def buscar_dados():
-    try:
-        r = requests.get('https://api.binance.com/api/v3/ticker/price', timeout=10)
-        return r.json() if r.status_code == 200 else []
-    except:
-        return []
+        if preco > resistencia and (simbolo, "alta") not in st.session_state.enviadas:
+            status = "🟢 Rompeu resistência"
+            msg = f"🚨 [{simbolo}] ROMPEU A RESISTÊNCIA! Preço: {preco:.2f} USDT | Res: {resistencia} | ⏰ H4"
+            enviar_mensagem(msg)
+            st.session_state.enviadas.add((simbolo, "alta"))
 
-while True:
-    dados = buscar_dados()
-    exibicao = []
-    for item in dados:
-        simbolo = item["symbol"]
-        if simbolo in zonas:
-            preco = float(item["price"])
-            suporte = zonas[simbolo]["suporte"]
-            resistencia = zonas[simbolo]["resistencia"]
-            status = "🟡 Dentro da zona"
+        elif preco < suporte and (simbolo, "baixa") not in st.session_state.enviadas:
+            status = "🔻 Perdeu suporte"
+            msg = f"⚠️ [{simbolo}] PERDEU O SUPORTE! Preço: {preco:.2f} USDT | Sup: {suporte} | ⏰ H4"
+            enviar_mensagem(msg)
+            st.session_state.enviadas.add((simbolo, "baixa"))
 
-            if preco > resistencia and (simbolo, "alta") not in enviadas:
-                status = "🟢 Rompeu resistência"
-                msg = f"🚨 [{simbolo}] ROMPEU A RESISTÊNCIA! Preço atual: {preco:.2f} USDT | Res: {resistencia} | ⏰ H4"
-                enviar_mensagem(msg)
-                enviadas.add((simbolo, "alta"))
-            elif preco < suporte and (simbolo, "baixa") not in enviadas:
-                status = "🔻 Perdeu suporte"
-                msg = f"⚠️ [{simbolo}] PERDEU O SUPORTE! Preço atual: {preco:.2f} USDT | Sup: {suporte} | ⏰ H4"
-                enviar_mensagem(msg)
-                enviadas.add((simbolo, "baixa"))
+        st.markdown(f"**{simbolo}**: {preco:.2f} USDT | Suporte: {suporte} | Resistência: {resistencia} → {status}")
 
-            exibicao.append((simbolo, preco, suporte, resistencia, status))
+st.info("Clique no botão abaixo para atualizar os preços.")
 
-    with placeholder.container():
-        st.markdown("### Situação Atual das Criptos")
-        for s, p, sup, res, stat in exibicao:
-            st.markdown(f"**{s}**: {p:.2f} USDT | Suporte: {sup} | Resistência: {res} → {stat}")
-        st.info("Atualizando a cada 10 segundos com base nas zonas definidas acima.")
-    time.sleep(10)
+if st.button("🔄 Atualizar Agora"):
+    st.rerun()
