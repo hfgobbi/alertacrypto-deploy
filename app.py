@@ -3,23 +3,29 @@ import streamlit as st
 import pandas as pd
 import json
 import os
-import alertacrypto_parametrizavel
+
+# Função do Alerta Crypto
+
+import streamlit as st
+
+def main_alerta():
+    st.title("🚨 Alerta Crypto Parametrizado")
+
+    # Seu código original vai aqui
+    st.write("Integre aqui seu sistema de alerta cripto existente.")
+    # Coloque todo o seu código original nesta área
+
+if __name__ == "__main__":
+    main()
+
+
+# Função Portfolio Inteligente
+import streamlit as st
+import pandas as pd
+import json
+import os
 
 DADOS_PATH = "portfolio_data.json"
-
-st.markdown("""
-<style>
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
-    @media (max-width: 768px) {
-        .stSidebar {
-            display: none;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
 
 def salvar_dados_portfolio(dados):
     with open(DADOS_PATH, "w") as f:
@@ -40,51 +46,86 @@ def obter_percentual_por_range(preco_atual, ranges):
 
 def portfolio_inteligente():
     st.title("💡 Portfolio Inteligente - Pool de Liquidez Multiativo")
-    ativo = st.selectbox("Selecione o ativo:", ["BTC", "ETH", "SOL"])
+
+    ativo = st.sidebar.radio(
+        "Selecione o ativo para análise:",
+        ("BTC", "ETH", "SOL")
+    )
 
     ativos_data = {
-        "BTC": {"saldo1_default": 1000.0, "saldo2_default": 1500.0, "ranges_default": {140000: 10, 130000: 30, 120000: 40, 110000: 55, 100000: 75, 90000: 90}},
-        "ETH": {"saldo1_default": 6109.0, "saldo2_default": 0.0, "ranges_default": {4000: 30, 3500: 30, 3100: 40, 2900: 55, 2700: 75, 2400: 100, 2000: 100}},
-        "SOL": {"saldo1_default": 4999.0, "saldo2_default": 0.0, "ranges_default": {300: 40, 260: 55, 220: 75, 200: 90, 170: 100, 140: 100, 110: 100}}
+        "BTC": {"saldo1_default": 1000.0, "saldo2_default": 1500.0, "ranges_default": {140000: 10, 130000: 30, 
+120000: 40, 110000: 55, 100000: 75, 90000: 90}},
+        "ETH": {"saldo1_default": 6109.0, "saldo2_default": 0.0, "ranges_default": {4000: 30, 3500: 30, 3100: 40, 
+2900: 55, 2700: 75, 2400: 100, 2000: 100}},
+        "SOL": {"saldo1_default": 4999.0, "saldo2_default": 0.0, "ranges_default": {300: 40, 260: 55, 220: 75, 200: 
+90, 170: 100, 140: 100, 110: 100}}
     }
 
     all_data = carregar_dados_portfolio()
     data = all_data.get(ativo, {})
     data_cfg = ativos_data[ativo]
 
-    with st.expander("⚙️ Configurações da Pool"):
-        saldo1 = st.number_input(f"{ativo} (USD)", value=data.get("saldo1", data_cfg['saldo1_default']), format="%.2f")
-        saldo2 = st.number_input("USDC (USD)", value=data.get("saldo2", data_cfg['saldo2_default']), format="%.2f")
-
+    # Tabela 1 - saldo
+    st.header(f"Tabela 1 - Valor disponível na Pool [{ativo}/USD]")
+    saldo1 = st.number_input(f"{ativo} (USD)", value=data.get("saldo1", data_cfg['saldo1_default']), format="%.2f")
+    saldo2 = st.number_input("USDC (USD)", value=data.get("saldo2", data_cfg['saldo2_default']), format="%.2f")
     total = saldo1 + saldo2
-    st.write(f"💰 Saldo total na pool: ${total:.2f}")
 
+    st.dataframe(pd.DataFrame({"Ativo": [ativo, "USDC", "TOTAL"], "USD": [saldo1, saldo2, total]}), hide_index=True)
+
+    # Tabela 4 - definir ranges
+    st.header("Tabela 4 - Estratégia por Range de Preço")
     ranges = data.get("ranges", data_cfg["ranges_default"])
     novos_ranges = {}
-    with st.expander("📈 Ranges de Estratégia"):
-        for price in sorted(ranges.keys(), reverse=True):
-            col1, col2 = st.columns([2,1])
-            with col1:
-                price_input = st.number_input(f"Preço do range para {ativo}", value=float(price))
-            with col2:
-                perc_input = st.number_input(f"% {ativo}", value=float(ranges[price]))
-            novos_ranges[price_input] = perc_input
+    for price in sorted(ranges.keys(), reverse=True):
+        col1, col2 = st.columns([2,1])
+        with col1:
+            price_input = st.number_input(f"Preço do range para {ativo}", value=float(price))
+        with col2:
+            perc_input = st.number_input(f"% {ativo}", value=float(ranges[price]))
+        novos_ranges[price_input] = perc_input
 
-    preco_atual = st.number_input(f"📌 Preço atual do {ativo}", value=sorted(novos_ranges.keys())[0])
+    preco_atual = st.number_input(f"Preço atual de mercado ({ativo})", value=sorted(novos_ranges.keys())[0])
 
     perc_ativo_sug = obter_percentual_por_range(preco_atual, novos_ranges)
     perc_usdc_sug = 100 - perc_ativo_sug
 
-    st.success(f"🚀 Melhor estratégia: {perc_ativo_sug}% {ativo} e {perc_usdc_sug}% USDC")
+    st.success(f"✅ Melhor estratégia atual para {ativo} é: {perc_ativo_sug}% {ativo} e {perc_usdc_sug}% USDC (Preço 
+atual: ${preco_atual:.2f})")
 
+    # Tabela 2 - estratégia sugerida automaticamente
+    st.header("Tabela 2 - Próxima Estratégia Sugerida")
+    st.dataframe(pd.DataFrame({"Ativo": [ativo, "USDC"], "Estratégia (%)": [perc_ativo_sug, perc_usdc_sug]}), 
+hide_index=True)
+
+    # Tabela 3 - sugestão de nova alocação
+    st.header("Tabela 3 - Sugestão de Nova Alocação (USD)")
+    st.dataframe(pd.DataFrame({
+        "Ativo": [ativo, "USDC", "TOTAL"],
+        "USD": [total * perc_ativo_sug / 100, total * perc_usdc_sug / 100, total]
+    }), hide_index=True)
+
+    # Salvar dados atualizados
     all_data[ativo] = {"saldo1": saldo1, "saldo2": saldo2, "ranges": novos_ranges}
     salvar_dados_portfolio(all_data)
 
-# Menu Principal com integração correta
+# Menu Principal
 st.sidebar.title("Menu Principal")
 menu = st.sidebar.selectbox("Navegação", ["Alerta Cripto", "Portfolio Inteligente"])
 
 if menu == "Alerta Cripto":
-    alertacrypto_parametrizavel.main()
+    st.title("🚨 Alerta Cripto")
+    st.info("Seu sistema de alerta aqui.")
+elif menu == "Portfolio Inteligente":
+    portfolio_inteligente()
+
+
+
+# Menu Principal
+st.sidebar.title("Menu Principal")
+menu = st.sidebar.selectbox("Navegação", ["Alerta Cripto", "Portfolio Inteligente"])
+
+if menu == "Alerta Cripto":
+    main_alerta()
 elif menu == "Portfolio Inteligente":
     portfolio_inteligente()
