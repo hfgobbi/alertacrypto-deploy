@@ -9,6 +9,7 @@ import os
 api_key = "6039606"
 numero_celular = "556781430574"
 ARQUIVO_ZONAS = "zonas.json"
+ARQUIVO_CACHE = "precos_cache.json"
 
 # Mapear ativos para CoinGecko
 mapa_ids = {
@@ -17,7 +18,6 @@ mapa_ids = {
     "SOLUSDT": "solana"
 }
 
-# Carregar zonas salvas
 def carregar_zonas():
     if os.path.exists(ARQUIVO_ZONAS):
         with open(ARQUIVO_ZONAS, "r") as f:
@@ -31,6 +31,16 @@ def carregar_zonas():
 def salvar_zonas(zonas):
     with open(ARQUIVO_ZONAS, "w") as f:
         json.dump(zonas, f, indent=4)
+
+def salvar_cache(dados):
+    with open(ARQUIVO_CACHE, "w") as f:
+        json.dump(dados, f)
+
+def carregar_cache():
+    if os.path.exists(ARQUIVO_CACHE):
+        with open(ARQUIVO_CACHE, "r") as f:
+            return json.load(f)
+    return []
 
 def enviar_mensagem(mensagem):
     if not mensagem.strip():
@@ -56,23 +66,24 @@ def buscar_dados_coingecko():
             for simbolo, cg_id in mapa_ids.items():
                 preco = preco_raw[cg_id]["usd"]
                 dados.append({"symbol": simbolo, "price": preco})
+            salvar_cache(dados)
             return dados
         else:
-            st.error(f"❌ CoinGecko respondeu com status: {r.status_code}")
-            return []
+            st.warning(f"⚠️ CoinGecko status {r.status_code}. Usando dados em cache.")
+            return carregar_cache()
     except Exception as e:
-        st.error(f"❌ Erro ao conectar à CoinGecko: {e}")
-        return []
+        st.warning(f"⚠️ Erro ao conectar à CoinGecko: {e}. Usando dados em cache.")
+        return carregar_cache()
 
-# Atualização automática
+# Atualização a cada 30 segundos
 if "ultima_atualizacao" not in st.session_state:
     st.session_state.ultima_atualizacao = time.time()
-elif time.time() - st.session_state.ultima_atualizacao > 10:
+elif time.time() - st.session_state.ultima_atualizacao > 30:
     st.session_state.ultima_atualizacao = time.time()
     st.rerun()
 
-st.set_page_config(page_title="Alerta Cripto com CoinGecko", layout="wide")
-st.title("📊 Alerta Cripto (CoinGecko) com Atualização Automática")
+st.set_page_config(page_title="Alerta Cripto com Cache CoinGecko", layout="wide")
+st.title("📊 Alerta Cripto (CoinGecko + Cache) — Atualização a cada 30s")
 
 zonas = carregar_zonas()
 
@@ -95,28 +106,28 @@ if "enviadas" not in st.session_state:
     st.session_state.enviadas = set()
 
 if not dados:
-    st.warning("⚠️ Nenhum dado carregado. Verifique conexão com CoinGecko.")
+    st.warning("⚠️ Nenhum dado carregado (nem mesmo cache).")
+else:
+    for item in dados:
+        simbolo = item["symbol"]
+        if simbolo in zonas:
+            preco = float(item["price"])
+            suporte = zonas[simbolo]["suporte"]
+            resistencia = zonas[simbolo]["resistencia"]
+            status = "🟡 Dentro da zona"
 
-for item in dados:
-    simbolo = item["symbol"]
-    if simbolo in zonas:
-        preco = float(item["price"])
-        suporte = zonas[simbolo]["suporte"]
-        resistencia = zonas[simbolo]["resistencia"]
-        status = "🟡 Dentro da zona"
+            if preco > resistencia and (simbolo, "alta") not in st.session_state.enviadas:
+                status = "🟢 Rompeu resistência"
+                msg = f"🚨 [{simbolo}] ROMPEU A RESISTÊNCIA! Preço: {preco:.2f} USDT | Res: {resistencia} | ⏰ H4"
+                enviar_mensagem(msg)
+                st.session_state.enviadas.add((simbolo, "alta"))
 
-        if preco > resistencia and (simbolo, "alta") not in st.session_state.enviadas:
-            status = "🟢 Rompeu resistência"
-            msg = f"🚨 [{simbolo}] ROMPEU A RESISTÊNCIA! Preço: {preco:.2f} USDT | Res: {resistencia} | ⏰ H4"
-            enviar_mensagem(msg)
-            st.session_state.enviadas.add((simbolo, "alta"))
+            elif preco < suporte and (simbolo, "baixa") not in st.session_state.enviadas:
+                status = "🔻 Perdeu suporte"
+                msg = f"⚠️ [{simbolo}] PERDEU O SUPORTE! Preço: {preco:.2f} USDT | Sup: {suporte} | ⏰ H4"
+                enviar_mensagem(msg)
+                st.session_state.enviadas.add((simbolo, "baixa"))
 
-        elif preco < suporte and (simbolo, "baixa") not in st.session_state.enviadas:
-            status = "🔻 Perdeu suporte"
-            msg = f"⚠️ [{simbolo}] PERDEU O SUPORTE! Preço: {preco:.2f} USDT | Sup: {suporte} | ⏰ H4"
-            enviar_mensagem(msg)
-            st.session_state.enviadas.add((simbolo, "baixa"))
+            st.markdown(f"**{simbolo}**: {preco:.2f} USDT | Suporte: {suporte} | Resistência: {resistencia} → {status}")
 
-        st.markdown(f"**{simbolo}**: {preco:.2f} USDT | Suporte: {suporte} | Resistência: {resistencia} → {status}")
-
-st.info("🔁 Dados obtidos via CoinGecko. Atualização automática a cada 10 segundos.")
+st.info("🔁 CoinGecko com cache ativado. Atualização a cada 30s.")
