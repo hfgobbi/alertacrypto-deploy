@@ -44,9 +44,16 @@ def buscar_dados():
     except:
         return []
 
+# Atualização automática a cada 10s
+if "ultima_atualizacao" not in st.session_state:
+    st.session_state.ultima_atualizacao = time.time()
+elif time.time() - st.session_state.ultima_atualizacao > 10:
+    st.session_state.ultima_atualizacao = time.time()
+    st.rerun()
+
 # Streamlit Interface
 st.set_page_config(page_title="Alerta Cripto", layout="wide")
-st.title("📊 Alerta Cripto com Parametrização de Zonas")
+st.title("📊 Alerta Cripto com Atualização Automática")
 
 zonas = carregar_zonas()
 
@@ -90,7 +97,4 @@ for item in dados:
 
         st.markdown(f"**{simbolo}**: {preco:.2f} USDT | Suporte: {suporte} | Resistência: {resistencia} → {status}")
 
-st.info("Clique no botão abaixo para atualizar os preços.")
-
-if st.button("🔄 Atualizar Agora"):
-    st.rerun()
+st.info("🔁 Atualização automática a cada 10 segundos. Para alertas, a mensagem só dispara 1x por rompimento.")
