@@ -3,11 +3,23 @@ from streamlit_option_menu import option_menu
 
 st.set_page_config(page_title="Cripto Alerta", layout="wide")
 
-with st.sidebar:
-    escolha = option_menu("Menu", ["🏠 Início", "📊 Painel de Alerta"],
-                          icons=["house", "bar-chart"], menu_icon="cast", default_index=0)
+pages = ["Início", "Painel de Alerta"]
+icons = ["house", "bar-chart"]
 
-if escolha == "🏠 Início":
+if "menu_escolha" not in st.session_state:
+    st.session_state.menu_escolha = "Início"
+
+with st.sidebar:
+    escolha = option_menu(
+        "Menu",
+        pages,
+        icons=icons,
+        menu_icon="cast",
+        default_index=0 if st.session_state.menu_escolha == "Início" else 1
+    )
+    st.session_state.menu_escolha = escolha
+
+if st.session_state.menu_escolha == "Início":
     st.markdown(
         """
         <div style='text-align: center; margin-top: 60px;'>
@@ -16,11 +28,10 @@ if escolha == "🏠 Início":
         """,
         unsafe_allow_html=True
     )
-    st.image(
-        "https://images.unsplash.com/photo-1624378444962-3c80e6f1e03e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-        use_column_width=True,
-        caption=None,
-    )
+    
+    # Aqui usa sua imagem local:
+    st.image("fundo_inicio.png", use_container_width=True)
+    
     st.markdown(
         """
         <div style='text-align: center; font-size: 1.3em; margin-top: 1em; margin-bottom: 2em;'>
@@ -29,16 +40,11 @@ if escolha == "🏠 Início":
         """,
         unsafe_allow_html=True
     )
-    st.markdown(
-        """
-        <div style='display: flex; justify-content: center;'>
-            <a href='/?page=📊 Painel de Alerta'><button style='font-size:1.2em; padding:12px 32px; border-radius:10px; background:#22c55e; color:white; border:none; cursor:pointer;'>🔍 Acessar Painel</button></a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    if st.button("🔍 Acessar Painel"):
+        st.session_state.menu_escolha = "Painel de Alerta"
+        st.experimental_rerun()
 
-elif escolha == "📊 Painel de Alerta":
+if st.session_state.menu_escolha == "Painel de Alerta":
     st.markdown("# 📊 Painel de Alerta Cripto")
     st.markdown("Carregando painel...")
     try:
