@@ -28,10 +28,6 @@ if st.session_state.menu_escolha == "Início":
         """,
         unsafe_allow_html=True
     )
-    
-    # Aqui usa sua imagem local:
-    st.image("fundo_inicio.png", use_container_width=True)
-    
     st.markdown(
         """
         <div style='text-align: center; font-size: 1.3em; margin-top: 1em; margin-bottom: 2em;'>
