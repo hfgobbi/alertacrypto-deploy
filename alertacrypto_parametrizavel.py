@@ -40,20 +40,24 @@ def enviar_mensagem(mensagem):
 def buscar_dados():
     try:
         r = requests.get('https://api.binance.com/api/v3/ticker/price', timeout=10)
-        return r.json() if r.status_code == 200 else []
-    except:
+        if r.status_code == 200:
+            return r.json()
+        else:
+            st.error(f"❌ Erro HTTP {r.status_code} ao buscar dados da Binance")
+            return []
+    except Exception as e:
+        st.error(f"❌ Falha ao conectar à API da Binance: {e}")
         return []
 
-# Atualização automática a cada 10s
+# Auto-update a cada 10s
 if "ultima_atualizacao" not in st.session_state:
     st.session_state.ultima_atualizacao = time.time()
 elif time.time() - st.session_state.ultima_atualizacao > 10:
     st.session_state.ultima_atualizacao = time.time()
     st.rerun()
 
-# Streamlit Interface
 st.set_page_config(page_title="Alerta Cripto", layout="wide")
-st.title("📊 Alerta Cripto com Atualização Automática")
+st.title("📊 Alerta Cripto com Atualização + Debug")
 
 zonas = carregar_zonas()
 
@@ -74,6 +78,9 @@ st.subheader("📡 Situação Atual das Criptos")
 dados = buscar_dados()
 if "enviadas" not in st.session_state:
     st.session_state.enviadas = set()
+
+if not dados:
+    st.warning("⚠️ Nenhum dado carregado. Verifique se a API da Binance está acessível nesse ambiente.")
 
 for item in dados:
     simbolo = item["symbol"]
@@ -97,4 +104,4 @@ for item in dados:
 
         st.markdown(f"**{simbolo}**: {preco:.2f} USDT | Suporte: {suporte} | Resistência: {resistencia} → {status}")
 
-st.info("🔁 Atualização automática a cada 10 segundos. Para alertas, a mensagem só dispara 1x por rompimento.")
+st.info("🔁 Atualização automática a cada 10 segundos. Erros de conexão agora são exibidos no painel.")
