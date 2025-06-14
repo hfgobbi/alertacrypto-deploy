@@ -82,7 +82,6 @@ elif time.time() - st.session_state.ultima_atualizacao > 30:
     st.session_state.ultima_atualizacao = time.time()
     st.rerun()
 
-st.set_page_config(page_title="Alerta Cripto com Cache CoinGecko", layout="wide")
 st.title("📊 Alerta Cripto (CoinGecko + Cache) — Atualização a cada 30s")
 
 zonas = carregar_zonas()
