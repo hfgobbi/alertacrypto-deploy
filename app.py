@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 from streamlit_option_menu import option_menu
 
@@ -18,7 +17,8 @@ if escolha == "🏠 Início":
         unsafe_allow_html=True,
     )
 
-    img_path = os.path.join(os.path.dirname(__file__), "fundo_inicio.png")
+
+    img_path = "fundo_inicio.png"
 
     col_text, col_img = st.columns([2, 1])
     with col_text:
