@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import requests
 
 DADOS_PATH = "portfolio_data.json"
 
@@ -21,6 +22,17 @@ def obter_percentual_por_range(preco_atual, ranges):
         if preco_atual >= preco_range:
             return ranges[preco_range]
     return list(ranges.values())[-1]
+
+def buscar_preco_mercado(ativo):
+    ids = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana"}
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={ids[ativo]}&vs_currencies=usd"
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            return r.json()[ids[ativo]]["usd"]
+    except:
+        pass
+    return None
 
 st.title("💡 Portfolio Inteligente - Pool de Liquidez Multiativo")
 
@@ -49,15 +61,33 @@ st.dataframe(pd.DataFrame({"Ativo": [ativo, "USDC", "TOTAL"], "USD": [saldo1, sa
 st.header("🎯 Estratégia por Range de Preço")
 ranges = data.get("ranges", data_cfg["ranges_default"])
 novos_ranges = {}
+
 for price in sorted(ranges.keys(), reverse=True):
     col1, col2 = st.columns([2, 1])
     with col1:
-        price_input = st.number_input(f"Preço do range para {ativo}", value=float(price))
+        price_input = st.number_input(f"Preço do range para {ativo}", value=float(price), key=f"preco_{ativo}_{price}")
     with col2:
-        perc_input = st.number_input(f"% {ativo}", value=float(ranges[price]))
+        perc_input = st.number_input(f"% {ativo}", value=float(ranges[price]), key=f"perc_{ativo}_{price}")
     novos_ranges[price_input] = perc_input
 
-preco_atual = st.number_input(f"Preço atual de mercado ({ativo})", value=sorted(novos_ranges.keys())[0])
+
+preco_mercado = data.get("preco_mercado")
+if not preco_mercado:
+    preco_mercado = sorted(novos_ranges.keys())[0]
+st.subheader("📌 Preço atual de mercado")
+
+col1, col2 = st.columns([2, 1])
+with col2:
+    if st.button("🔄 Atualizar preço"):
+        preco_mercado = buscar_preco_mercado(ativo)
+        if preco_mercado:
+            preco_mercado = float(preco_mercado)
+            st.success(f"Preço atualizado: ${preco_mercado}")
+            all_data[ativo]["preco_mercado"] = preco_mercado
+            salvar_dados_portfolio(all_data)
+
+with col1:
+    preco_atual = st.number_input(f"Preço atual de mercado ({ativo})", value=preco_mercado, format="%.2f")
 
 perc_ativo_sug = obter_percentual_por_range(preco_atual, novos_ranges)
 perc_usdc_sug = 100 - perc_ativo_sug
@@ -74,5 +104,10 @@ st.dataframe(pd.DataFrame({
     "USD": [total * perc_ativo_sug / 100, total * perc_usdc_sug / 100, total]
 }), hide_index=True)
 
-all_data[ativo] = {"saldo1": saldo1, "saldo2": saldo2, "ranges": novos_ranges}
+all_data[ativo] = {
+    "saldo1": saldo1,
+    "saldo2": saldo2,
+    "ranges": novos_ranges,
+    "preco_mercado": preco_atual
+}
 salvar_dados_portfolio(all_data)
