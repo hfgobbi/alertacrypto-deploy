@@ -8,7 +8,10 @@ st.set_page_config(
 
 st.title("⚽ Olefoot • Dashboard Estratégico")
 st.markdown("Bem-vindo ao painel inteligente para gestão de portfólio e alertas de criptoativos.")
+
 st.markdown("### 👉 Use o menu lateral para acessar:")
-st.markdown("- 📈 Alerta Cripto")
-st.markdown("- 💡 Portfolio Inteligente")
+
+# Aqui estão os links diretos:
+st.markdown("- 📈 [Alerta Cripto](./alertacrypto)")
+st.markdown("- 💡 [Portfolio Inteligente](./portfolio)")
 
