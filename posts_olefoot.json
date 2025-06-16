@@ -1,0 +1,211 @@
+{
+  "blog_metadata": {
+    "name": "Blog Estratégico Olefoot",
+    "description": "Insights, análises e estratégias aplicadas no mercado de criptoativos",
+    "version": "1.0",
+    "created_at": "2025-01-16T10:30:00Z",
+    "last_updated": "2025-01-16T10:30:00Z",
+    "total_posts": 4
+  },
+  "categories": [
+    "Análise Técnica",
+    "Gestão de Risco", 
+    "Portfolio",
+    "Tendências",
+    "Educacional",
+    "DeFi"
+  ],
+  "difficulty_levels": [
+    "Iniciante",
+    "Intermediário", 
+    "Avançado"
+  ],
+  "posts": [
+    {
+      "id": 1,
+      "titulo": "Estratégia de DCA: Como Aplicar na Prática",
+      "slug": "estrategia-dca-como-aplicar-pratica",
+      "categoria": "Gestão de Risco",
+      "nivel": "Iniciante",
+      "status": "published",
+      "data_criacao": "2025-01-14T08:00:00Z",
+      "data_publicacao": "2025-01-14T08:00:00Z", 
+      "data_atualizacao": "2025-01-14T08:00:00Z",
+      "resumo": "Aprenda a implementar a estratégia Dollar Cost Averaging (DCA) para reduzir a volatilidade dos seus investimentos em cripto.",
+      "tags": ["DCA", "Estratégia", "Risco", "Investimento"],
+      "tempo_leitura": "5 min",
+      "tempo_leitura_segundos": 300,
+      "autor": {
+        "nome": "Equipe Olefoot",
+        "email": "equipe@olefoot.com",
+        "avatar": "/avatars/equipe-olefoot.jpg"
+      },
+      "seo": {
+        "meta_title": "Estratégia DCA: Guia Completo para Criptomoedas",
+        "meta_description": "Aprenda a implementar DCA para reduzir volatilidade em cripto. Guia prático com exemplos reais.",
+        "keywords": ["DCA", "Dollar Cost Averaging", "Criptomoedas", "Estratégia", "Investimento"]
+      },
+      "estatisticas": {
+        "visualizacoes": 1247,
+        "likes": 89,
+        "compartilhamentos": 23,
+        "tempo_medio_leitura": 280,
+        "feedback_positivo": 0.92
+      },
+      "conteudo": "## O que é Dollar Cost Averaging (DCA)?\n\nO Dollar Cost Averaging é uma estratégia de investimento que consiste em comprar um ativo regularmente, independentemente do preço. Esta abordagem reduz o impacto da volatilidade ao longo do tempo.\n\n### Como Implementar:\n\n1. **Defina um valor fixo** para investir mensalmente\n2. **Escolha uma data específica** do mês para fazer a compra\n3. **Mantenha a disciplina** independente das oscilações do mercado\n4. **Monitore regularmente** mas não altere a estratégia por emoção\n\n### Vantagens:\n- Reduz o risco de timing de mercado\n- Disciplina de investimento regular\n- Menor impacto da volatilidade\n- Ideal para investidores iniciantes\n\n### Exemplo Prático:\nInvestindo R$ 500 todo dia 15 em Bitcoin, você comprará mais quando o preço estiver baixo e menos quando estiver alto, resultando em um preço médio melhor ao longo do tempo.\n\n### Implementação Técnica:\n\n```python\n# Exemplo de DCA automatizado\ndef dca_strategy(valor_mensal, data_compra):\n    if datetime.now().day == data_compra:\n        comprar_crypto('BTC', valor_mensal)\n        log_transacao(valor_mensal, 'BTC')\n```\n\n### Calculadora DCA:\n\nPara calcular o resultado de uma estratégia DCA:\n- **Investimento total**: Valor mensal × Número de meses\n- **Preço médio**: Soma dos preços ÷ Número de compras\n- **ROI**: (Valor atual - Investimento total) ÷ Investimento total\n\n**Lembre-se**: DCA funciona melhor em ativos com tendência de alta no longo prazo!",
+      "recursos_relacionados": [
+        {
+          "tipo": "video",
+          "titulo": "DCA na Prática: Demonstração",
+          "url": "/videos/dca-pratica-demo.mp4"
+        },
+        {
+          "tipo": "calculadora", 
+          "titulo": "Calculadora DCA",
+          "url": "/tools/calculadora-dca"
+        }
+      ],
+      "comentarios_habilitados": true,
+      "featured": false
+    },
+    {
+      "id": 2,
+      "titulo": "Análise RSI: Identificando Pontos de Entrada e Saída",
+      "slug": "analise-rsi-pontos-entrada-saida",
+      "categoria": "Análise Técnica",
+      "nivel": "Intermediário",
+      "status": "published",
+      "data_criacao": "2025-01-11T14:30:00Z",
+      "data_publicacao": "2025-01-11T14:30:00Z",
+      "data_atualizacao": "2025-01-11T14:30:00Z",
+      "resumo": "Como usar o Índice de Força Relativa (RSI) para timing de mercado e otimização de trades.",
+      "tags": ["RSI", "Análise Técnica", "Trading", "Indicadores"],
+      "tempo_leitura": "8 min",
+      "tempo_leitura_segundos": 480,
+      "autor": {
+        "nome": "Equipe Olefoot",
+        "email": "equipe@olefoot.com", 
+        "avatar": "/avatars/equipe-olefoot.jpg"
+      },
+      "seo": {
+        "meta_title": "RSI Trading: Guia Completo do Indicador",
+        "meta_description": "Domine o RSI para timing perfeito. Estratégias práticas para entrada e saída em trades.",
+        "keywords": ["RSI", "Relative Strength Index", "Trading", "Análise Técnica", "Indicadores"]
+      },
+      "estatisticas": {
+        "visualizacoes": 892,
+        "likes": 67,
+        "compartilhamentos": 15,
+        "tempo_medio_leitura": 420,
+        "feedback_positivo": 0.89
+      },
+      "conteudo": "## Entendendo o RSI (Relative Strength Index)\n\nO RSI é um oscilador momentum que mede a velocidade e magnitude das mudanças de preço, oscilando entre 0 e 100.\n\n### Interpretação:\n- **RSI > 70**: Ativo pode estar sobrecomprado (sinal de venda)\n- **RSI < 30**: Ativo pode estar sobrevendido (sinal de compra)\n- **RSI entre 30-70**: Zona neutra\n\n### Estratégias Práticas:\n\n1. **Divergência Bullish**: Preço faz mínima mais baixa, RSI faz mínima mais alta\n2. **Divergência Bearish**: Preço faz máxima mais alta, RSI faz máxima mais baixa\n3. **Quebra de 50**: RSI acima de 50 indica força, abaixo indica fraqueza\n\n### Configurações Recomendadas:\n- Período: 14 (padrão)\n- Timeframe: Varia conforme estratégia (1h para day trade, 1d para swing)\n\n### Implementação em Python:\n\n```python\nimport talib\nimport pandas as pd\n\ndef calculate_rsi(prices, period=14):\n    return talib.RSI(prices, timeperiod=period)\n\ndef rsi_signals(df):\n    df['RSI'] = calculate_rsi(df['close'])\n    df['signal'] = 0\n    df.loc[df['RSI'] < 30, 'signal'] = 1  # Compra\n    df.loc[df['RSI'] > 70, 'signal'] = -1  # Venda\n    return df\n```\n\n### Estratégia de Divergências:\n\n**Setup de Divergência Bullish:**\n1. Identifique mínimas consecutivas no preço\n2. Compare com mínimas do RSI no mesmo período\n3. Se preço faz mínima mais baixa e RSI faz mínima mais alta = divergência\n4. Aguarde confirmação com rompimento de resistência\n\n### Backtest de Performance:\n\nEm backtests históricos do Bitcoin:\n- **Win Rate RSI < 30**: 68% dos sinais lucrativos\n- **Win Rate RSI > 70**: 72% dos sinais lucrativos\n- **Falsos sinais**: 25-30% em mercados laterais\n\n**Dica Pro**: Combine RSI com volume para filtrar falsos sinais!",
+      "recursos_relacionados": [
+        {
+          "tipo": "template",
+          "titulo": "Template RSI TradingView",
+          "url": "/templates/rsi-tradingview.txt"
+        }
+      ],
+      "comentarios_habilitados": true,
+      "featured": true
+    },
+    {
+      "id": 3,
+      "titulo": "Estratégia de Pareamento: BTC vs USD",
+      "slug": "estrategia-pareamento-btc-usd",
+      "categoria": "Gestão de Risco",
+      "nivel": "Avançado",
+      "status": "published",
+      "data_criacao": "2025-01-15T16:45:00Z",
+      "data_publicacao": "2025-01-15T16:45:00Z",
+      "data_atualizacao": "2025-01-15T16:45:00Z",
+      "resumo": "Domine a arte do pareamento inteligente: como acumular BTC durante quedas ou preservar capital com USD/stablecoins.",
+      "tags": ["Pareamento", "BTC", "USD", "Estratégia", "Risk Management"],
+      "tempo_leitura": "11 min",
+      "tempo_leitura_segundos": 660,
+      "autor": {
+        "nome": "Equipe Olefoot",
+        "email": "equipe@olefoot.com",
+        "avatar": "/avatars/equipe-olefoot.jpg"
+      },
+      "seo": {
+        "meta_title": "Pareamento BTC/USD: Estratégia Avançada",
+        "meta_description": "Quando usar BTC ou USD como par base. Estratégia completa para acumular Bitcoin ou preservar capital.",
+        "keywords": ["Pareamento", "BTC", "USD", "Bitcoin", "Stablecoins", "Trading"]
+      },
+      "estatisticas": {
+        "visualizacoes": 567,
+        "likes": 45,
+        "compartilhamentos": 12,
+        "tempo_medio_leitura": 580,
+        "feedback_positivo": 0.94
+      },
+      "conteudo": "## Estratégia de Pareamento: BTC vs USD\n\n**O pareamento define TUDO na sua estratégia.** Entenda quando usar cada um para maximizar lucros ou proteger capital.\n\n---\n\n## 🎯 ESTRATÉGIA 1: ALTCOIN/BTC (Acumulação de BTC)\n\n### Quando Usar:\n- BTC em tendência de baixa ou lateral\n- Altcoins mostrando força relativa\n- Você acredita na valorização futura do BTC\n- Mercado em correção, mas não em crash\n\n### Como Funciona:\n\n**Exemplo Prático:**\n```\nSituação: BTC caindo 10%, ETH caindo apenas 5%\n\nAntes:  1 ETH = 0.05 BTC\nDepois: 1 ETH = 0.056 BTC (+12% em BTC!)\n\nResultado: Você acumula mais BTC mesmo com tudo caindo em USD\n```\n\n### ✅ Vantagens:\n- Aumenta saldo em BTC sem comprar BTC diretamente\n- Aproveita correções para acumular\n- Quando BTC reverter, o ganho é multiplicado\n\n### ⚠️ Riscos:\n- Se altcoin cair mais que BTC, você perde BTC\n- Exposição à volatilidade do Bitcoin\n- Requer timing e análise técnica\n\n---\n\n## 🛡️ ESTRATÉGIA 2: ALTCOIN/USD (Preservação de Capital)\n\n### Quando Usar:\n- Mercado muito volátil ou incerto\n- BTC em tendência de queda forte\n- Você quer preservar valor em dólar\n- Período de consolidação longo\n\n### Como Funciona:\n\n**Exemplo Prático:**\n```\nSituação: BTC caindo 15%, ETH caindo 10%\n\nEm USDT: Você só perde 10% (queda do ETH)\nEm BTC: Você perderia 15% + variação relativa\n\nResultado: Menor perda, capital preservado\n```\n\n---\n\n## 🎯 MATRIZ DE DECISÃO\n\n| Cenário | BTC Forte | BTC Lateral | BTC Fraco |\n|---------|-----------|-------------|----------|\n| **Altcoin Forte** | 🟢 USD | 🟡 BTC | 🟢 BTC |\n| **Altcoin Lateral** | 🟢 USD | 🟡 USD | 🟢 BTC |\n| **Altcoin Fraca** | 🔴 USD | 🔴 USD | 🔴 Cash |\n\n**Legenda:**\n- 🟢 = Estratégia Recomendada\n- 🟡 = Estratégia Neutra\n- 🔴 = Evitar ou Sair\n\n---\n\n## 💡 EXEMPLO DE APLICAÇÃO\n\n**Cenário:** BTC em correção de 20%, ETH resistindo melhor\n\n**Estratégia BTC:**\n```\n1. Comprar ETH/BTC quando RSI < 35\n2. Vender quando RSI > 65\n3. Meta: Aumentar saldo em BTC em 15%\n4. Stop: Se ETH/BTC quebrar suporte\n```\n\n**Estratégia USD:**\n```\n1. Comprar ETH/USDT em suportes\n2. Vender em resistências\n3. Meta: 3-5% por operação\n4. Stop: 2% de perda máxima\n```\n\n---\n\n## 🎯 RESUMO EXECUTIVO\n\n**Use ALTCOIN/BTC quando:**\n- Quer acumular Bitcoin\n- BTC está em baixa/lateral\n- Altcoin mostra força relativa\n- Tem visão de longo prazo\n\n**Use ALTCOIN/USD quando:**\n- Quer preservar capital\n- Mercado muito volátil\n- Trading de curto prazo\n- Incerteza sobre direção do BTC\n\n**Lembre-se:** Não existe estratégia perfeita. O segredo é adaptar conforme o mercado muda.",
+      "recursos_relacionados": [
+        {
+          "tipo": "planilha",
+          "titulo": "Calculadora de Pareamento",
+          "url": "/tools/calculadora-pareamento.xlsx"
+        }
+      ],
+      "comentarios_habilitados": true,
+      "featured": false
+    },
+    {
+      "id": 4,
+      "titulo": "Pool de Liquidez: Estratégias Avançadas para Maximizar Yield",
+      "slug": "pool-liquidez-estrategias-avancadas-yield",
+      "categoria": "DeFi",
+      "nivel": "Avançado",
+      "status": "published",
+      "data_criacao": "2025-01-16T10:30:00Z",
+      "data_publicacao": "2025-01-16T10:30:00Z",
+      "data_atualizacao": "2025-01-16T10:30:00Z",
+      "resumo": "Domine as estratégias mais lucrativas de pool de liquidez: como posicionar-se em ranges, calcular yields reais e mitigar riscos de perda impermanente.",
+      "tags": ["DeFi", "Pool de Liquidez", "Yield Farming", "Impermanent Loss", "Uniswap"],
+      "tempo_leitura": "15 min",
+      "tempo_leitura_segundos": 900,
+      "autor": {
+        "nome": "Equipe Olefoot",
+        "email": "equipe@olefoot.com",
+        "avatar": "/avatars/equipe-olefoot.jpg"
+      },
+      "seo": {
+        "meta_title": "Pool de Liquidez: Guia Avançado para Maximizar Yield",
+        "meta_description": "Estratégias avançadas de LP: ranges, yields, riscos e melhores pools. Guia completo para DeFi.",
+        "keywords": ["Pool de Liquidez", "DeFi", "Yield Farming", "Uniswap V3", "Impermanent Loss", "LP"]
+      },
+      "estatisticas": {
+        "visualizacoes": 234,
+        "likes": 18,
+        "compartilhamentos": 5,
+        "tempo_medio_leitura": 650,
+        "feedback_positivo": 0.87
+      },
+      "conteudo": "# 💧 Pool de Liquidez: A Arte do Yield Inteligente\n\nPool de liquidez não é apenas \"depositar tokens e ganhar fees\" - é um **jogo estratégico multidimensional** onde yield, risco e timing determinam se você sairá lucrativo ou com perdas significativas.\n\n---\n\n## 🎯 Estratégias de Range: Maximizando Capital Efficiency\n\n### **Concentrated Liquidity Strategy**\n\nDiferente dos pools tradicionais (50/50), pools V3 (Uniswap V3, PancakeSwap V3) permitem **concentrar liquidez em ranges específicos**, multiplicando o yield quando o preço permanece na faixa.\n\n**Exemplo Prático ETH/USDC:**\n```\nRange Atual: $2,000 - $2,400 ETH\nCapital: $10,000 ($5k ETH + $5k USDC)\nFee Tier: 0.05%\n\nYield Potential:\n- Range Ativo (preço dentro): 15-40% APY\n- Range Inativo (preço fora): 0% APY\n- Risco: Impermanent Loss + Opportunity Cost\n```\n\n### **Range Selection Matrix**\n\n| **Range Width** | **Yield Potential** | **Risk Level** | **Ideal For** |\n|----------------|-------------------|----------------|---------------|\n| **Tight (±5%)** | 🟢 Very High (30-80% APY) | 🔴 Very High | Day traders, alta convicção |\n| **Medium (±15%)** | 🟡 High (15-25% APY) | 🟡 Medium | Swing positioning |\n| **Wide (±50%)** | 🔴 Low (3-8% APY) | 🟢 Low | Set-and-forget, conservadores |\n\n---\n\n## 💰 Tipos de Lucro em Pool de Liquidez\n\n### **1. Trading Fees (0.05% - 1.0%)**\n- **Fonte**: Cada swap paga fee aos LPs\n- **Cálculo**: Volume × Fee Rate × Sua % do Pool\n- **Otimização**: Escolher pools com alto volume/TVL ratio\n\n### **2. Liquidity Mining Rewards**\n- **Fonte**: Tokens nativos da protocol (UNI, CAKE, etc.)\n- **Rendimento**: 5-200% APY adicional\n- **Risco**: Token rewards podem desvalorizar\n\n### **3. Yield Farming Boosts**\n- **Fonte**: Staking LP tokens em farms\n- **Multipliers**: 2x-10x base rewards\n- **Estratégia**: Compound rewards diariamente\n\n---\n\n## 🎯 5 Perguntas Estratégicas Fundamentais\n\n### **Q1: Como calcular o Break-Even Point para Impermanent Loss?**\n\n**R:** O break-even ocorre quando fees acumulados > impermanent loss.\n\n**Fórmula Simplificada:**\n```\nBreak-Even Time = Impermanent Loss / (Daily Fee Revenue)\n\nExemplo ETH/USDC:\n- IL com ETH +20%: ~1%\n- Daily fees: 0.05%\n- Break-even: 20 dias\n\nSe ETH continuar subindo >20%, IL aumenta mais rápido que fees\n```\n\n### **Q2: Qual a diferença real entre pools estáveis vs voláteis?**\n\n**R:** **Pools Estáveis (USDC/USDT):**\n- Vantagem: IL quase zero, yield consistente\n- Desvantagem: APY baixo (2-8%)\n- Ideal para: Capital preservation + yield\n\n**Pools Voláteis (ETH/BTC):**\n- Vantagem: Fees altos, rewards generosos\n- Desvantagem: IL significativo (5-50%)\n- Ideal para: Maximizar yield com hedge natural\n\n### **Q3: Como timing de entrada/saída afeta rentabilidade?**\n\n**R:** **Entry Timing:**\n- Melhor: Durante alta correlação entre ativos (IL baixo)\n- Pior: Início de divergência forte entre preços\n\n**Exit Timing:**\n- Ideal: Quando ratio de preços volta ao original\n- Crítico: Antes de divergência extrema (>50%)\n\n### **Q4: Vale a pena fazer LP com tokens em bull market?**\n\n**R:** **Depende da correlação:**\n\n**Alta Correlação (ETH/BTC):** ✅ Recomendado\n- Ambos sobem juntos = IL mínimo\n- Fees + rewards compensam facilmente\n\n**Baixa Correlação (ETH/USDC):** ⚠️ Cuidado\n- ETH pump = você vende ETH barato para LPs\n- Only se fees > opportunity cost de hold\n\n### **Q5: Como diversificar pools para otimizar risk/reward?**\n\n**R:** **Portfolio Allocation Model:**\n```\n40% - Stablecoin Pools (USDC/USDT, DAI/USDC)\n30% - Blue Chip Pairs (ETH/BTC, ETH/USDC)\n20% - High-Yield Farms (CAKE/BNB, UNI/ETH)\n10% - Experimental/New Protocols\n```\n\n---\n\n## ⚠️ Riscos de Perda em Pool de Liquidez\n\n### **1. Impermanent Loss (Principal Risk)**\n\n**Como Acontece:**\n```\nEntrada: 1 ETH ($2,000) + 2,000 USDC\nCenário: ETH sobe para $3,000 (+50%)\n\nResultado LP:\n- Recebe: 0.816 ETH + 2,449 USDC = $4,897\n- Hold simples: 1 ETH + 2,000 USDC = $5,000\n- Impermanent Loss: $103 (2.1%)\n\nSe ETH dobrar (100%): IL = 5.7%\nSe ETH triplicar (200%): IL = 12.5%\n```\n\n### **2. Smart Contract Risk**\n- **Probabilidade**: 0.1-2% dos pools\n- **Impacto**: Perda total dos fundos\n- **Mitigação**: Usar protocols auditados (Uniswap, PancakeSwap)\n\n### **3. Rug Pull em Farms**\n- **Sinais**: APY >1000%, tokens sem auditoria\n- **Proteção**: Máximo 5% em farms experimentais\n- **Research**: Team doxxed, contratos verificados\n\n---\n\n## 🏆 Top 3 Principais Pools de Liquidez\n\n### **🥇 #1: ETH/USDC (Uniswap V3)**\n```\nTVL: $400M+\nVolume 24h: $100M+\nFee Tier: 0.05%\nAPY Range: 8-25%\n\nPor que domina:\n✅ Maior volume de trading\n✅ Spread baixo (0.01-0.03%)\n✅ Liquidez profunda\n✅ Menor slippage\n\nIdeal para: Traders profissionais, instituições\n```\n\n### **🥈 #2: BTC/ETH (Multiple DEXs)**\n```\nTVL Combined: $200M+\nVolume 24h: $50M+\nFee Tier: 0.3%\nAPY Range: 12-30%\n\nPor que funciona:\n✅ Correlação alta (80%+)\n✅ Impermanent Loss baixo\n✅ Fees consistentes\n✅ Hedge natural\n\nIdeal para: Holders de BTC+ETH, swing traders\n```\n\n### **🥉 #3: USDC/USDT (Curve Finance)**\n```\nTVL: $300M+\nVolume 24h: $80M+\nFee Tier: 0.04%\nAPY Range: 3-12%\n\nPor que estável:\n✅ IL praticamente zero\n✅ Yield consistente\n✅ Capital preservation\n✅ Baixa volatilidade\n\nIdeal para: Capital conservador, DeFi beginners\n```\n\n---\n\n## 🎯 Pareamentos Mais Lucrativos por Categoria\n\n### **🔥 High-Yield (15-50% APY)**\n1. **CAKE/BNB** (PancakeSwap) - Ecosystem token + native\n2. **UNI/ETH** (Uniswap) - Protocol token synergy\n3. **MATIC/ETH** (QuickSwap) - Layer 2 growth play\n\n### **⚖️ Balanced Risk-Reward (8-20% APY)**\n1. **ETH/USDC** - Blue chip + stablecoin\n2. **BTC/ETH** - Two largest cryptos\n3. **AVAX/USDC** - L1 alternative + stable\n\n### **🛡️ Conservative (3-10% APY)**\n1. **USDC/USDT** - Stablecoin arbitrage\n2. **DAI/USDC** - Decentralized stable pair\n3. **FRAX/USDC** - Algorithmic stable innovation\n\n---\n\n## 💡 Action Plan: Implementação Estratégica\n\n### **Beginner Strategy (Primeiro $1,000)**\n```\n60% - USDC/USDT (Curve)\n30% - ETH/USDC wide range\n10% - Experimental learning\n```\n\n### **Intermediate Strategy ($5,000-$50,000)**\n```\n40% - Stablecoin pools\n35% - ETH/BTC correlation play  \n20% - High-yield farms\n5% - New protocol testing\n```\n\n### **Advanced Strategy ($50,000+)**\n```\n30% - Multiple stablecoin pools\n25% - Concentrated ETH/USDC ranges\n25% - BTC/ETH market making\n15% - Yield farming alpha\n5% - Protocol governance tokens\n```\n\n---\n\n## 🎯 Bottom Line\n\n**Pool de liquidez é rentável quando:**\n✅ Você entende os riscos completamente  \n✅ Diversifica entre correlações diferentes  \n✅ Monitora IL vs fee accumulation  \n✅ Usa protocols auditados e estabelecidos  \n✅ Tem estratégia de entrada/saída clara  \n\n**Avoid se:**\n❌ Espera yield sem risco  \n❌ FOMO em APYs >500%  \n❌ Não entende impermanent loss  \n❌ Vai all-in em um pool só  \n❌ Ignora smart contract risks  \n\n**Lembre-se**: LP é **market making profissional**. Você está competindo contra bots, arbitrageurs e whales. Success vem de estratégia, não sorte.",
+      "recursos_relacionados": [
+        {
+          "tipo": "calculadora",
+          "titulo": "Calculadora de Impermanent Loss",
+          "url": "/tools/calculadora-il"
+        },
+        {
+          "tipo": "planilha",
+          "titulo": "Modelo de Análise de Pools",
+          "url": "/tools/analise-pools.xlsx"
+        }
+      ],
+      "comentarios_habilitados": true,
+      "featured": true
+    }
+  ],
+  "configuracoes": {
+    "posts_por_pagina": 10,
+    "comentarios_habilitados_global": true,
+    "moderacao_comentarios": true,
+    "notificacoes_novos_posts": true,
+    "rss_feed_habilitado": true,
+    "sitemap_habilitado": true
+  }
+}
