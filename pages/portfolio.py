@@ -25,34 +25,60 @@ def obter_percentual_por_range(preco_atual, ranges):
     # Se preço for menor que todos os ranges, retorna o menor percentual
     return float(ranges_ordenados[-1][1]) if ranges_ordenados else 50.0
 
-def buscar_preco_mercado(ativo):
-    """Usa a mesma API do alerta cripto que funcionou"""
+def buscar_preco_do_cache_alertas():
+    """Busca preços do cache do sistema de alertas"""
     try:
-        # Mapear para os mesmos IDs do alerta cripto
-        mapa_ids = {
-            "BTC": "bitcoin",
-            "ETH": "ethereum", 
-            "SOL": "solana"
-        }
-        
-        # Usar exatamente a mesma URL e parâmetros do alerta cripto
+        # Tentar ler do cache do alerta cripto
+        if os.path.exists("precos_cache.json"):
+            with open("precos_cache.json", "r") as f:
+                cache_alertas = json.load(f)
+                
+            # Se tem dados recentes (estrutura com timestamp)
+            if isinstance(cache_alertas, dict) and "dados" in cache_alertas:
+                dados = cache_alertas["dados"]
+            else:
+                dados = cache_alertas
+                
+            # Extrair preços
+            precos = {}
+            for item in dados:
+                if item["symbol"] == "BTCUSDT":
+                    precos["BTC"] = item["price"]
+                elif item["symbol"] == "ETHUSDT":
+                    precos["ETH"] = item["price"]
+                elif item["symbol"] == "SOLUSDT":
+                    precos["SOL"] = item["price"]
+                    
+            return precos
+    except:
+        pass
+    return {}
+
+def buscar_preco_mercado(ativo):
+    """Primeiro tenta API, depois usa cache do alerta cripto"""
+    
+    # Tentar API direta (caso funcione)
+    try:
+        mapa_ids = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana"}
         url = "https://api.coingecko.com/api/v3/simple/price"
         cg_id = mapa_ids[ativo]
         params = {"ids": cg_id, "vs_currencies": "usd"}
         
-        r = requests.get(url, params=params, timeout=15)
+        r = requests.get(url, params=params, timeout=10)
         
         if r.status_code == 200:
             preco_raw = r.json()
             if cg_id in preco_raw and "usd" in preco_raw[cg_id]:
-                preco = preco_raw[cg_id]["usd"]
-                return preco
-        
-        return None
-        
-    except Exception as e:
-        print(f"Erro ao buscar preço: {e}")
-        return None
+                return preco_raw[cg_id]["usd"]
+    except:
+        pass
+    
+    # Se API falhou, tentar cache do alerta cripto
+    precos_cache = buscar_preco_do_cache_alertas()
+    if ativo in precos_cache:
+        return precos_cache[ativo]
+    
+    return None
 
 st.title("💡 Portfolio Inteligente - Pool de Liquidez Multiativo")
 
@@ -141,14 +167,27 @@ with col1:
 
 with col2:
     if st.button("🔄 Atualizar preço", key=f"btn_atualizar_{ativo}"):
-        with st.spinner("Buscando preço na CoinGecko..."):
+        with st.spinner("Buscando preço..."):
             novo_preco = buscar_preco_mercado(ativo)
             if novo_preco:
                 st.session_state[f"preco_atual_{ativo}"] = float(novo_preco)
                 st.success(f"✅ Preço atualizado: ${novo_preco:.2f}")
                 st.rerun()
             else:
-                st.error("❌ Erro ao buscar preço. Tente inserir manualmente.")
+                st.error("❌ Erro ao buscar preço. Verifique se o alerta cripto está rodando.")
+                
+# Mostrar preços disponíveis do cache de alertas
+if os.path.exists("precos_cache.json"):
+    precos_disponiveis = buscar_preco_do_cache_alertas()
+    if precos_disponiveis:
+        st.info(f"💡 **Preços do sistema de alertas:** BTC: ${precos_disponiveis.get('BTC', 'N/A'):.2f} | ETH: ${precos_disponiveis.get('ETH', 'N/A'):.2f} | SOL: ${precos_disponiveis.get('SOL', 'N/A'):.2f}")
+        
+        # Botão para usar preço do cache
+        if ativo in precos_disponiveis:
+            if st.button(f"📋 Usar preço do alerta cripto (${precos_disponiveis[ativo]:.2f})", key=f"btn_cache_{ativo}"):
+                st.session_state[f"preco_atual_{ativo}"] = float(precos_disponiveis[ativo])
+                st.success(f"✅ Preço importado do sistema de alertas!")
+                st.rerun()
 
 # Usar o preço do session state
 preco_atual = st.session_state[f"preco_atual_{ativo}"]
