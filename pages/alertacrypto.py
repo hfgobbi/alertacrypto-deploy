@@ -10,11 +10,28 @@ numero_celular = "556781430574"
 ARQUIVO_ZONAS = "zonas.json"
 ARQUIVO_CACHE = "precos_cache.json"
 
-# Mapear ativos para CoinGecko
-mapa_ids = {
-    "BTCUSDT": "bitcoin",
-    "ETHUSDT": "ethereum",
-    "SOLUSDT": "solana"
+# Mapear ativos para diferentes APIs
+mapa_apis = {
+    "coingecko": {
+        "BTCUSDT": "bitcoin",
+        "ETHUSDT": "ethereum",
+        "SOLUSDT": "solana"
+    },
+    "coincap": {
+        "BTCUSDT": "bitcoin",
+        "ETHUSDT": "ethereum", 
+        "SOLUSDT": "solana"
+    },
+    "cryptocompare": {
+        "BTCUSDT": "BTC",
+        "ETHUSDT": "ETH",
+        "SOLUSDT": "SOL"
+    },
+    "coinlore": {
+        "BTCUSDT": "90",
+        "ETHUSDT": "80",
+        "SOLUSDT": "48543"
+    }
 }
 
 def carregar_zonas():
@@ -60,34 +77,130 @@ def enviar_mensagem(mensagem):
         print(f"❌ Erro ao enviar mensagem: {e}")
     return False
 
-def buscar_dados_coingecko():
+def buscar_coingecko():
+    """API 1: CoinGecko"""
     try:
         url = "https://api.coingecko.com/api/v3/simple/price"
-        ids = ",".join(mapa_ids.values())
+        ids = ",".join(mapa_apis["coingecko"].values())
         params = {"ids": ids, "vs_currencies": "usd"}
         
-        r = requests.get(url, params=params, timeout=15)
+        r = requests.get(url, params=params, timeout=10)
         
         if r.status_code == 200:
             preco_raw = r.json()
             dados = []
-            
-            for simbolo, cg_id in mapa_ids.items():
+            for simbolo, cg_id in mapa_apis["coingecko"].items():
                 if cg_id in preco_raw and "usd" in preco_raw[cg_id]:
                     preco = preco_raw[cg_id]["usd"]
                     dados.append({"symbol": simbolo, "price": preco})
-            
-            salvar_cache(dados)
-            return dados, True
-        else:
-            st.warning(f"⚠️ CoinGecko API status {r.status_code}. Usando dados em cache.")
-            dados_cache, _ = carregar_cache()
-            return dados_cache, False
-            
+            return dados, "CoinGecko"
     except Exception as e:
-        st.warning(f"⚠️ Erro ao conectar à CoinGecko: {e}. Usando dados em cache.")
-        dados_cache, _ = carregar_cache()
-        return dados_cache, False
+        print(f"CoinGecko falhou: {e}")
+    return None, None
+
+def buscar_coincap():
+    """API 2: CoinCap"""
+    try:
+        dados = []
+        for simbolo, coin_id in mapa_apis["coincap"].items():
+            url = f"https://api.coincap.io/v2/assets/{coin_id}"
+            r = requests.get(url, timeout=8)
+            if r.status_code == 200:
+                data = r.json()
+                preco = float(data["data"]["priceUsd"])
+                dados.append({"symbol": simbolo, "price": preco})
+        
+        if len(dados) == 3:  # Se conseguiu buscar todas as 3 moedas
+            return dados, "CoinCap"
+    except Exception as e:
+        print(f"CoinCap falhou: {e}")
+    return None, None
+
+def buscar_cryptocompare():
+    """API 3: CryptoCompare"""
+    try:
+        dados = []
+        for simbolo, symbol in mapa_apis["cryptocompare"].items():
+            url = f"https://min-api.cryptocompare.com/data/price?fsym={symbol}&tsyms=USD"
+            r = requests.get(url, timeout=8)
+            if r.status_code == 200:
+                data = r.json()
+                if "USD" in data:
+                    preco = float(data["USD"])
+                    dados.append({"symbol": simbolo, "price": preco})
+        
+        if len(dados) == 3:
+            return dados, "CryptoCompare"
+    except Exception as e:
+        print(f"CryptoCompare falhou: {e}")
+    return None, None
+
+def buscar_coinlore():
+    """API 4: CoinLore"""
+    try:
+        dados = []
+        for simbolo, coin_id in mapa_apis["coinlore"].items():
+            url = f"https://api.coinlore.net/api/ticker/?id={coin_id}"
+            r = requests.get(url, timeout=8)
+            if r.status_code == 200:
+                data = r.json()
+                if data and len(data) > 0:
+                    preco = float(data[0]["price_usd"])
+                    dados.append({"symbol": simbolo, "price": preco})
+        
+        if len(dados) == 3:
+            return dados, "CoinLore"
+    except Exception as e:
+        print(f"CoinLore falhou: {e}")
+    return None, None
+
+def buscar_binance():
+    """API 5: Binance (sem auth)"""
+    try:
+        url = "https://api.binance.com/api/v3/ticker/price"
+        r = requests.get(url, timeout=8)
+        if r.status_code == 200:
+            data = r.json()
+            dados = []
+            for item in data:
+                if item["symbol"] in ["BTCUSDT", "ETHUSDT", "SOLUSDT"]:
+                    dados.append({
+                        "symbol": item["symbol"],
+                        "price": float(item["price"])
+                    })
+            
+            if len(dados) == 3:
+                return dados, "Binance"
+    except Exception as e:
+        print(f"Binance falhou: {e}")
+    return None, None
+
+def buscar_dados_multiplas_apis():
+    """Tenta múltiplas APIs até conseguir dados"""
+    apis = [
+        ("CoinGecko", buscar_coingecko),
+        ("Binance", buscar_binance),
+        ("CoinCap", buscar_coincap),
+        ("CryptoCompare", buscar_cryptocompare),
+        ("CoinLore", buscar_coinlore)
+    ]
+    
+    for nome_api, funcao_api in apis:
+        try:
+            st.write(f"🔄 Tentando {nome_api}...")
+            dados, fonte = funcao_api()
+            if dados and len(dados) == 3:
+                st.success(f"✅ Sucesso com {fonte}!")
+                salvar_cache(dados)
+                return dados, True, fonte
+        except Exception as e:
+            st.warning(f"❌ {nome_api} falhou: {e}")
+            continue
+    
+    # Se todas falharam, usar cache
+    st.error("❌ Todas as APIs falharam! Usando cache...")
+    dados_cache, _ = carregar_cache()
+    return dados_cache, False, "Cache"
 
 def verificar_necessidade_atualizacao():
     """Verifica se precisa atualizar os dados (5 minutos = 300 segundos)"""
@@ -102,8 +215,8 @@ def calcular_tempo_restante():
     return int(tempo_restante)
 
 # Configuração da página
-st.set_page_config(page_title="Alerta Cripto - CoinGecko", layout="wide")
-st.title("📊 Alerta Cripto (CoinGecko Free) — Atualização a cada 5 minutos")
+st.set_page_config(page_title="Alerta Cripto - Multi APIs", layout="wide")
+st.title("📊 Alerta Cripto (Multi APIs) — Atualização a cada 5 minutos")
 
 # Inicializar session state
 if "ultima_atualizacao" not in st.session_state:
@@ -114,6 +227,8 @@ if "dados_atuais" not in st.session_state:
     st.session_state.dados_atuais = []
 if "api_funcionando" not in st.session_state:
     st.session_state.api_funcionando = True
+if "fonte_atual" not in st.session_state:
+    st.session_state.fonte_atual = "Cache"
 
 # Carregar zonas
 zonas = carregar_zonas()
@@ -123,16 +238,17 @@ col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([2, 1, 1, 1])
 
 with col_btn1:
     if st.button("🔄 Atualizar Preços Agora", type="primary", use_container_width=True):
-        with st.spinner("Buscando preços na CoinGecko..."):
-            dados, api_ok = buscar_dados_coingecko()
+        with st.spinner("Testando múltiplas APIs..."):
+            dados, api_ok, fonte = buscar_dados_multiplas_apis()
             st.session_state.dados_atuais = dados
             st.session_state.ultima_atualizacao = time.time()
             st.session_state.api_funcionando = api_ok
+            st.session_state.fonte_atual = fonte
             if api_ok:
-                st.success("✅ Preços atualizados com sucesso!")
+                st.success(f"✅ Preços atualizados via {fonte}!")
             else:
                 st.warning("⚠️ Usando dados em cache")
-            time.sleep(1)
+            time.sleep(2)
             st.rerun()
 
 with col_btn2:
@@ -150,30 +266,45 @@ with col_btn3:
 with col_btn4:
     # Status da API
     if st.session_state.api_funcionando:
-        st.success("🟢 Online")
+        st.success(f"🟢 {st.session_state.fonte_atual}")
     else:
         st.error("🔴 Cache")
 
 # Verificação automática a cada 5 minutos
 if verificar_necessidade_atualizacao():
     with st.spinner("Atualizando automaticamente..."):
-        dados, api_ok = buscar_dados_coingecko()
+        dados, api_ok, fonte = buscar_dados_multiplas_apis()
         st.session_state.dados_atuais = dados
         st.session_state.ultima_atualizacao = time.time()
         st.session_state.api_funcionando = api_ok
+        st.session_state.fonte_atual = fonte
         if api_ok and dados:
-            st.success("🔄 Atualização automática realizada!")
+            st.success(f"🔄 Atualização automática via {fonte}!")
 
 # Se não tem dados, carregar do cache
 if not st.session_state.dados_atuais:
     dados_cache, timestamp_cache = carregar_cache()
     st.session_state.dados_atuais = dados_cache
     st.session_state.ultima_atualizacao = timestamp_cache
+    st.session_state.fonte_atual = "Cache"
 
 # Mostrar última atualização
 if st.session_state.ultima_atualizacao > 0:
     tempo_atualizacao = time.strftime("%d/%m %H:%M:%S", time.localtime(st.session_state.ultima_atualizacao))
-    st.caption(f"🕒 Última atualização: {tempo_atualizacao}")
+    st.caption(f"🕒 Última atualização: {tempo_atualizacao} via {st.session_state.fonte_atual}")
+
+# Info sobre APIs disponíveis
+with st.expander("🔧 APIs Configuradas"):
+    st.markdown("""
+    **📡 APIs disponíveis (em ordem de prioridade):**
+    1. **CoinGecko** - API principal (gratuita)
+    2. **Binance** - Exchange oficial (sem autenticação)
+    3. **CoinCap** - API backup confiável
+    4. **CryptoCompare** - API alternativa
+    5. **CoinLore** - API simples e rápida
+    
+    O sistema tenta todas até conseguir dados atualizados! 🚀
+    """)
 
 # Configuração das zonas
 with st.expander("⚙️ Configurar Zonas de Suporte e Resistência"):
@@ -325,11 +456,11 @@ with col1:
     st.info("🔄 **Atualização:** A cada 5 minutos\n📱 **Alertas:** WhatsApp configurado")
 
 with col2:
-    st.info("🆓 **API:** CoinGecko (100% Gratuita)\n💾 **Cache:** Dados salvos localmente")
+    st.info(f"🆓 **API:** {st.session_state.fonte_atual}\n💾 **Cache:** Dados salvos localmente")
 
 with col3:
     total_alertas = len(st.session_state.enviadas)
-    st.info(f"📊 **Alertas Enviados:** {total_alertas}\n🎯 **Moedas:** {len(mapa_ids)} monitoradas")
+    st.info(f"📊 **Alertas Enviados:** {total_alertas}\n🎯 **Moedas:** 3 monitoradas")
 
 # Auto-refresh a cada 30 segundos para atualizar o contador
 time.sleep(1)
