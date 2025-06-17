@@ -29,11 +29,11 @@ def buscar_preco_mercado(ativo):
     ids = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana"}
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={ids[ativo]}&vs_currencies=usd"
     try:
-        r = requests.get(url)
+        r = requests.get(url, timeout=10)
         if r.status_code == 200:
             return r.json()[ids[ativo]]["usd"]
-    except:
-        pass
+    except Exception as e:
+        st.error(f"Erro ao buscar preço: {e}")
     return None
 
 st.title("💡 Portfolio Inteligente - Pool de Liquidez Multiativo")
@@ -104,19 +104,36 @@ for i in range(5):
         novos_ranges[str(preco)] = perc
 
 st.subheader("📌 Preço atual de mercado")
-preco_mercado = data.get("preco_mercado", 0.0)
+
+# Inicializar session state para preço atual
+if f"preco_atual_{ativo}" not in st.session_state:
+    st.session_state[f"preco_atual_{ativo}"] = data.get("preco_mercado", 0.0)
 
 col1, col2 = st.columns([2, 1])
+
 with col1:
-    preco_atual = st.number_input(f"Preço atual de mercado ({ativo})", value=preco_mercado, format="%.2f")
+    preco_atual = st.number_input(
+        f"Preço atual de mercado ({ativo})", 
+        value=st.session_state[f"preco_atual_{ativo}"], 
+        format="%.2f",
+        key=f"input_preco_{ativo}"
+    )
+    # Atualizar session state quando input muda
+    st.session_state[f"preco_atual_{ativo}"] = preco_atual
 
 with col2:
-    if st.button("🔄 Atualizar preço"):
-        novo_preco = buscar_preco_mercado(ativo)
-        if novo_preco:
-            preco_atual = float(novo_preco)
-            st.success(f"Preço atualizado: ${preco_atual}")
-            st.rerun()
+    if st.button("🔄 Atualizar preço", key=f"btn_atualizar_{ativo}"):
+        with st.spinner("Buscando preço..."):
+            novo_preco = buscar_preco_mercado(ativo)
+            if novo_preco:
+                st.session_state[f"preco_atual_{ativo}"] = float(novo_preco)
+                st.success(f"✅ Preço atualizado: ${novo_preco:.2f}")
+                st.rerun()
+            else:
+                st.error("❌ Erro ao buscar preço. Tente novamente.")
+
+# Usar o preço do session state
+preco_atual = st.session_state[f"preco_atual_{ativo}"]
 
 # Calcular estratégia atual
 if preco_atual > 0 and novos_ranges:
@@ -170,3 +187,11 @@ if novos_ranges:
         for k, v in sorted(novos_ranges.items(), key=lambda x: float(x[0]), reverse=True)
     ])
     st.dataframe(ranges_df, hide_index=True)
+
+# Status da última atualização
+st.sidebar.markdown("### 📊 Status")
+st.sidebar.info(f"💰 Portfolio: ${total:.2f}")
+st.sidebar.info(f"📈 {ativo}: ${preco_atual:.2f}")
+if novos_ranges:
+    perc_atual = obter_percentual_por_range(preco_atual, novos_ranges) if preco_atual > 0 else 0
+    st.sidebar.info(f"🎯 Estratégia: {perc_atual:.1f}% {ativo}")
