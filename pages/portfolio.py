@@ -26,15 +26,33 @@ def obter_percentual_por_range(preco_atual, ranges):
     return float(ranges_ordenados[-1][1]) if ranges_ordenados else 50.0
 
 def buscar_preco_mercado(ativo):
-    ids = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana"}
-    url = f"https://api.coingecko.com/api/v3/simple/price?ids={ids[ativo]}&vs_currencies=usd"
+    """Usa a mesma API do alerta cripto que funcionou"""
     try:
-        r = requests.get(url, timeout=10)
+        # Mapear para os mesmos IDs do alerta cripto
+        mapa_ids = {
+            "BTC": "bitcoin",
+            "ETH": "ethereum", 
+            "SOL": "solana"
+        }
+        
+        # Usar exatamente a mesma URL e parâmetros do alerta cripto
+        url = "https://api.coingecko.com/api/v3/simple/price"
+        cg_id = mapa_ids[ativo]
+        params = {"ids": cg_id, "vs_currencies": "usd"}
+        
+        r = requests.get(url, params=params, timeout=15)
+        
         if r.status_code == 200:
-            return r.json()[ids[ativo]]["usd"]
+            preco_raw = r.json()
+            if cg_id in preco_raw and "usd" in preco_raw[cg_id]:
+                preco = preco_raw[cg_id]["usd"]
+                return preco
+        
+        return None
+        
     except Exception as e:
-        st.error(f"Erro ao buscar preço: {e}")
-    return None
+        print(f"Erro ao buscar preço: {e}")
+        return None
 
 st.title("💡 Portfolio Inteligente - Pool de Liquidez Multiativo")
 
@@ -123,14 +141,14 @@ with col1:
 
 with col2:
     if st.button("🔄 Atualizar preço", key=f"btn_atualizar_{ativo}"):
-        with st.spinner("Buscando preço..."):
+        with st.spinner("Buscando preço na CoinGecko..."):
             novo_preco = buscar_preco_mercado(ativo)
             if novo_preco:
                 st.session_state[f"preco_atual_{ativo}"] = float(novo_preco)
                 st.success(f"✅ Preço atualizado: ${novo_preco:.2f}")
                 st.rerun()
             else:
-                st.error("❌ Erro ao buscar preço. Tente novamente.")
+                st.error("❌ Erro ao buscar preço. Tente inserir manualmente.")
 
 # Usar o preço do session state
 preco_atual = st.session_state[f"preco_atual_{ativo}"]
