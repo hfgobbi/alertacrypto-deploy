@@ -4,9 +4,22 @@ import time
 import json
 import os
 
-# Configurações
-api_key_whatsapp = "6039606"
-numero_celular = "556781430574"
+# Configurações - Agora com duas APIs WhatsApp
+apis_whatsapp = [
+    {
+        "nome": "API WhatsApp 1",
+        "api_key": "6039606",
+        "numero": "556781430574",
+        "ativa": True
+    },
+    {
+        "nome": "API WhatsApp 2", 
+        "api_key": "1484739",
+        "numero": "556793426790",
+        "ativa": True
+    }
+]
+
 ARQUIVO_ZONAS = "zonas.json"
 ARQUIVO_CACHE = "precos_cache.json"
 
@@ -63,19 +76,53 @@ def carregar_cache():
             return cache.get("dados", []), cache.get("timestamp", 0)
     return [], 0
 
-def enviar_mensagem(mensagem):
+def enviar_mensagem_api(mensagem, api_config):
+    """Envia mensagem usando uma API específica"""
     if not mensagem.strip():
         return False
+    
     url = "https://api.callmebot.com/whatsapp.php"
-    params = {"phone": numero_celular, "text": mensagem, "apikey": api_key_whatsapp}
+    params = {
+        "phone": api_config["numero"], 
+        "text": mensagem, 
+        "apikey": api_config["api_key"]
+    }
+    
     try:
         r = requests.get(url, params=params, timeout=10)
         if r.status_code == 200 and "queued" in r.text.lower():
-            print("✅ Enviada:", mensagem)
+            print(f"✅ [{api_config['nome']}] Enviada: {mensagem[:50]}...")
             return True
+        else:
+            print(f"❌ [{api_config['nome']}] Falha: {r.status_code} - {r.text}")
     except Exception as e:
-        print(f"❌ Erro ao enviar mensagem: {e}")
+        print(f"❌ [{api_config['nome']}] Erro: {e}")
+    
     return False
+
+def enviar_mensagem(mensagem):
+    """Envia mensagem usando as duas APIs como backup"""
+    if not mensagem.strip():
+        return False
+    
+    # Contador de sucessos
+    sucessos = 0
+    apis_usadas = []
+    
+    # Tentar enviar com cada API ativa
+    for api_config in apis_whatsapp:
+        if api_config["ativa"]:
+            if enviar_mensagem_api(mensagem, api_config):
+                sucessos += 1
+                apis_usadas.append(api_config['nome'])
+    
+    # Log do resultado
+    if sucessos > 0:
+        st.success(f"📱 Alerta enviado via: {', '.join(apis_usadas)} ({sucessos}/{len([a for a in apis_whatsapp if a['ativa']])} APIs)")
+        return True
+    else:
+        st.error("❌ Falha ao enviar alerta em todas as APIs WhatsApp!")
+        return False
 
 def buscar_coingecko():
     """API 1: CoinGecko"""
@@ -215,8 +262,8 @@ def calcular_tempo_restante():
     return int(tempo_restante)
 
 # Configuração da página
-st.set_page_config(page_title="Alerta Cripto - Multi APIs", layout="wide")
-st.title("📊 Alerta Cripto (Multi APIs) — Atualização a cada 5 minutos")
+st.set_page_config(page_title="Alerta Cripto - Dupla API WhatsApp", layout="wide")
+st.title("📊 Alerta Cripto (Dupla API WhatsApp) — Máxima Confiabilidade")
 
 # Inicializar session state
 if "ultima_atualizacao" not in st.session_state:
@@ -232,6 +279,56 @@ if "fonte_atual" not in st.session_state:
 
 # Carregar zonas
 zonas = carregar_zonas()
+
+# Seção de configuração das APIs WhatsApp
+with st.expander("📱 Configuração APIs WhatsApp (Redundância)"):
+    st.markdown("### 🔄 Sistema de Backup Duplo")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("📱 API WhatsApp 1")
+        st.info(f"**Número:** {apis_whatsapp[0]['numero']}\n**API Key:** {apis_whatsapp[0]['api_key']}\n**Status:** {'✅ Ativa' if apis_whatsapp[0]['ativa'] else '❌ Inativa'}")
+        apis_whatsapp[0]['ativa'] = st.checkbox("Ativar API 1", value=apis_whatsapp[0]['ativa'], key="api1")
+    
+    with col2:
+        st.subheader("📱 API WhatsApp 2") 
+        st.info(f"**Número:** {apis_whatsapp[1]['numero']}\n**API Key:** {apis_whatsapp[1]['api_key']}\n**Status:** {'✅ Ativa' if apis_whatsapp[1]['ativa'] else '❌ Inativa'}")
+        apis_whatsapp[1]['ativa'] = st.checkbox("Ativar API 2", value=apis_whatsapp[1]['ativa'], key="api2")
+    
+    # Teste das APIs
+    col_test1, col_test2 = st.columns(2)
+    
+    with col_test1:
+        if st.button("🧪 Testar API 1", use_container_width=True):
+            if apis_whatsapp[0]['ativa']:
+                msg_teste = f"🧪 Teste API 1 - {time.strftime('%H:%M:%S')}"
+                if enviar_mensagem_api(msg_teste, apis_whatsapp[0]):
+                    st.success("✅ API 1 funcionando!")
+                else:
+                    st.error("❌ API 1 com problemas")
+            else:
+                st.warning("⚠️ API 1 está desativada")
+    
+    with col_test2:
+        if st.button("🧪 Testar API 2", use_container_width=True):
+            if APIs_whatsapp[1]['ativa']:
+                msg_teste = f"🧪 Teste API 2 - {time.strftime('%H:%M:%S')}"
+                if enviar_mensagem_api(msg_teste, apis_whatsapp[1]):
+                    st.success("✅ API 2 funcionando!")
+                else:
+                    st.error("❌ API 2 com problemas")
+            else:
+                st.warning("⚠️ API 2 está desativada")
+    
+    # Status geral
+    apis_ativas = [api for api in apis_whatsapp if api['ativa']]
+    if len(apis_ativas) == 2:
+        st.success("🟢 **Redundância Total:** Ambas as APIs ativas!")
+    elif len(apis_ativas) == 1:
+        st.warning("🟡 **Redundância Parcial:** Apenas 1 API ativa")
+    else:
+        st.error("🔴 **Sem Redundância:** Nenhuma API ativa!")
 
 # Botões de controle principais
 col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([2, 1, 1, 1])
@@ -296,14 +393,19 @@ if st.session_state.ultima_atualizacao > 0:
 # Info sobre APIs disponíveis
 with st.expander("🔧 APIs Configuradas"):
     st.markdown("""
-    **📡 APIs disponíveis (em ordem de prioridade):**
+    **📡 APIs de Preços (em ordem de prioridade):**
     1. **CoinGecko** - API principal (gratuita)
     2. **Binance** - Exchange oficial (sem autenticação)
     3. **CoinCap** - API backup confiável
     4. **CryptoCompare** - API alternativa
     5. **CoinLore** - API simples e rápida
     
-    O sistema tenta todas até conseguir dados atualizados! 🚀
+    **📱 APIs WhatsApp (Redundância Total):**
+    - **API 1:** 556781430574 (Key: 6039606)
+    - **API 2:** 556793426790 (Key: 1484739)
+    
+    ✅ Sistema tenta todas as APIs até conseguir dados atualizados!
+    📱 Alertas são enviados via ambas as APIs para máxima confiabilidade!
     """)
 
 # Configuração das zonas
@@ -453,10 +555,11 @@ st.markdown("---")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.info("🔄 **Atualização:** A cada 5 minutos\n📱 **Alertas:** WhatsApp configurado")
+    apis_ativas = len([api for api in apis_whatsapp if api['ativa']])
+    st.info(f"🔄 **Atualização:** A cada 5 minutos\n📱 **APIs WhatsApp:** {apis_ativas}/2 ativas")
 
 with col2:
-    st.info(f"🆓 **API:** {st.session_state.fonte_atual}\n💾 **Cache:** Dados salvos localmente")
+    st.info(f"🆓 **API Preços:** {st.session_state.fonte_atual}\n💾 **Cache:** Dados salvos localmente")
 
 with col3:
     total_alertas = len(st.session_state.enviadas)
