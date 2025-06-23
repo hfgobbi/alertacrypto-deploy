@@ -147,7 +147,7 @@ with st.sidebar.form("form_ativo"):
     # Calcular valores em tempo real para exibir
     if liquidez_inicial > 0 and liquidez_final > 0:
         impermanent_loss_calc = liquidez_inicial - liquidez_final
-        lucro_prejuizo_calc = liquidez_inicial + liquidez_final + taxa_gerada
+        lucro_prejuizo_calc = (liquidez_final + taxa_gerada) - liquidez_inicial
         valor_total_atual = liquidez_final + taxa_gerada
         rent_total_calc = calcular_rentabilidade_total(liquidez_inicial, valor_total_atual)
         
@@ -215,12 +215,12 @@ if salvar_ativo and nome_ativo:
     
     dias_no_range = calcular_dias_no_range(data_inicio_str)
     
-    # FÓRMULAS CORRETAS:
-    # Impermanent Loss = diferença entre valor inicial e valor final (sem considerar taxas)
+    # FÓRMULAS CORRETAS RESTAURADAS:
+    # Impermanent Loss = liquidez inicial - liquidez final
     impermanent_loss = liquidez_inicial - liquidez_final
     
-    # Lucro/Prejuízo = liquidez inicial + liquidez final + taxas geradas
-    lucro_prejuizo = liquidez_inicial + liquidez_final + taxa_gerada
+    # Lucro/Prejuízo = (liquidez final + taxa gerada) - liquidez inicial
+    lucro_prejuizo = (liquidez_final + taxa_gerada) - liquidez_inicial
     
     # Calcular rentabilidade total (incluindo taxas)
     valor_total_atual = liquidez_final + taxa_gerada
@@ -303,9 +303,9 @@ if todos_dados:
                 st.metric("Liquidez Final", f"${dados['liquidez_final']:.2f}")
                 st.metric("Taxa Gerada", f"${dados['taxa_gerada']:.2f}")
                 
-                # FÓRMULAS CORRETAS:
-                # Lucro/Prejuízo = liquidez inicial + liquidez final + taxas geradas
-                lucro_prejuizo_atual = dados['liquidez_inicial'] + dados['liquidez_final'] + dados['taxa_gerada']
+                # FÓRMULAS CORRETAS RESTAURADAS:
+                # Lucro/Prejuízo = (liquidez final + taxa gerada) - liquidez inicial
+                lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
                 st.metric("Lucro/Prejuízo", f"${lucro_prejuizo_atual:.2f}")
                 
                 # Impermanent Loss = liquidez inicial - liquidez final
@@ -367,9 +367,9 @@ if todos_dados:
             rent_taxas_perc = calcular_rentabilidade_total(dados['liquidez_inicial'], dados['taxa_gerada'])
             rent_mensal_taxas_atual = calcular_rentabilidade_mensal(rent_taxas_perc, dias_atuais)
             
-            # FÓRMULAS CORRETAS:
+            # FÓRMULAS CORRETAS RESTAURADAS:
             impermanent_loss = dados['liquidez_inicial'] - dados['liquidez_final']
-            lucro_prejuizo_atual = dados['liquidez_inicial'] + dados['liquidez_final'] + dados['taxa_gerada']
+            lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
             
             analise_completa = pd.DataFrame({
                 "Métrica": [
