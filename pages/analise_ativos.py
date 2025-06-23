@@ -40,16 +40,17 @@ def calcular_rentabilidade_total(liquidez_inicial, liquidez_final):
         return round(((liquidez_final - liquidez_inicial) / liquidez_inicial) * 100, 2)
     return 0
 
-def calcular_apr(rentabilidade_total, dias_no_range):
-    """Calcula APR (Annual Percentage Rate)"""
-    if dias_no_range > 0:
-        return round((rentabilidade_total / dias_no_range) * 365, 2)
+def calcular_apr_excel(valor, liquidez_inicial, dias_no_range):
+    """Calcula APR conforme Excel: (Valor/Liquidez) * 30 / Dias * 12"""
+    if liquidez_inicial > 0 and dias_no_range > 0:
+        rentabilidade_mensal = (valor / liquidez_inicial) * 30 / dias_no_range
+        return round(rentabilidade_mensal * 12 * 100, 2)
     return 0
 
-def calcular_rentabilidade_mensal(rentabilidade_total, dias_no_range):
-    """Calcula rentabilidade mensal"""
-    if dias_no_range > 0:
-        return round((rentabilidade_total / dias_no_range) * 30, 2)
+def calcular_rentabilidade_mensal_excel(valor, liquidez_inicial, dias_no_range):
+    """Calcula Rentabilidade Mensal conforme Excel: (Valor/Liquidez) * 30 / Dias"""
+    if liquidez_inicial > 0 and dias_no_range > 0:
+        return round(((valor / liquidez_inicial) * 30 / dias_no_range) * 100, 2)
     return 0
 
 def calcular_taxas_somente_apr(taxa_gerada, liquidez_inicial, dias_no_range):
@@ -140,7 +141,7 @@ with st.sidebar.form("form_ativo"):
         usd_b = st.number_input("Valor USD Token B:", value=dados_ativo.get("usd_b", 0.0), format="%.2f", key="usd_b")
     
     st.subheader("💰 Liquidez")
-    liquidez_inicial = st.number_input("Liquidez Inicial (USD):", value=dados_ativo.get("liquidez_inicial", usd_a + usd_b if usd_a + usd_b > 0 else 0.0), format="%.2f", key="liq_inicial")
+    liquidez_inicial = st.number_input("Liquidez Inicial (USD):", value=dados_ativo.get("liquidez_inicial", 0.0), format="%.2f", key="liq_inicial")
     liquidez_final = st.number_input("Liquidez Final (USD):", value=dados_ativo.get("liquidez_final", 0.0), format="%.2f", key="liq_final")
     taxa_gerada = st.number_input("Taxa Gerada (USD):", value=dados_ativo.get("taxa_gerada", 0.0), format="%.2f", key="taxa_gerada")
     
@@ -165,7 +166,7 @@ with st.sidebar.form("form_ativo"):
     # Botão de salvar
     salvar_ativo = st.form_submit_button("💾 Salvar Ativo", use_container_width=True, type="primary")
 
-# BOTÃO DE EXCLUSÃO - DEFINITIVO E FUNCIONAL
+# BOTÃO DE EXCLUSÃO - VISÍVEL E FUNCIONAL
 if ativo_selecionado != "Criar Novo":
     st.sidebar.markdown("---")
     st.sidebar.subheader("🗑️ Excluir Ativo")
@@ -220,7 +221,7 @@ if salvar_ativo and nome_ativo:
     
     dias_no_range = calcular_dias_no_range(data_inicio_str)
     
-    # FÓRMULAS CORRETAS RESTAURADAS:
+    # FÓRMULAS CORRETAS:
     # Impermanent Loss = liquidez final - liquidez inicial
     impermanent_loss = liquidez_final - liquidez_inicial
     
@@ -231,14 +232,13 @@ if salvar_ativo and nome_ativo:
     valor_total_atual = liquidez_final + taxa_gerada
     rentabilidade_total = calcular_rentabilidade_total(liquidez_inicial, valor_total_atual)
     
-    # Calcular APRs
-    apr_total = calcular_apr(rentabilidade_total, dias_no_range)
-    taxas_somente_apr = calcular_taxas_somente_apr(taxa_gerada, liquidez_inicial, dias_no_range)
+    # Calcular APRs conforme Excel
+    apr_total = calcular_apr_excel(lucro_prejuizo, liquidez_inicial, dias_no_range)
+    taxas_somente_apr = calcular_apr_excel(taxa_gerada, liquidez_inicial, dias_no_range)
     
-    # Calcular rentabilidades mensais
-    rent_mensal_total = calcular_rentabilidade_mensal(rentabilidade_total, dias_no_range)
-    rent_taxas_perc = calcular_rentabilidade_total(liquidez_inicial, taxa_gerada)
-    rent_mensal_taxas = calcular_rentabilidade_mensal(rent_taxas_perc, dias_no_range)
+    # Calcular rentabilidades mensais conforme Excel
+    rent_mensal_total = calcular_rentabilidade_mensal_excel(lucro_prejuizo, liquidez_inicial, dias_no_range)
+    rent_mensal_taxas = calcular_rentabilidade_mensal_excel(taxa_gerada, liquidez_inicial, dias_no_range)
     
     # Calcular proporções CORRETAS baseadas no total USD de cada token
     total_usd_token_a = quantidade_a * usd_a  # Quantidade × Valor USD
@@ -263,7 +263,6 @@ if salvar_ativo and nome_ativo:
         "total_usd_token_b": total_usd_token_b,
         "proporcao_a": proporcao_a,
         "quantidade_b": quantidade_b,
-        "usd_b": usd_b,
         "proporcao_b": proporcao_b,
         "liquidez_inicial": liquidez_inicial,
         "liquidez_final": liquidez_final,
@@ -314,7 +313,7 @@ if todos_dados:
                 st.metric("Liquidez Final", f"${dados['liquidez_final']:.2f}")
                 st.metric("Taxa Gerada", f"${dados['taxa_gerada']:.2f}")
                 
-                # FÓRMULAS CORRETAS RESTAURADAS:
+                # FÓRMULAS CORRETAS:
                 # Lucro/Prejuízo = (liquidez final + taxa gerada) - liquidez inicial
                 lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
                 st.metric("Lucro/Prejuízo", f"${lucro_prejuizo_atual:.2f}")
@@ -326,16 +325,15 @@ if todos_dados:
             with col3:
                 st.subheader("📈 Rentabilidade")
                 
-                # Recalcular rentabilidades com dados atuais
+                # Recalcular rentabilidades com fórmulas corretas do Excel
                 valor_total_atual = dados['liquidez_final'] + dados['taxa_gerada']
                 rent_total_atual = calcular_rentabilidade_total(dados['liquidez_inicial'], valor_total_atual)
-                apr_atual = calcular_apr(rent_total_atual, dias_atuais)
-                taxas_apr_atual = calcular_taxas_somente_apr(dados['taxa_gerada'], dados['liquidez_inicial'], dias_atuais)
-                rent_mensal_atual = calcular_rentabilidade_mensal(rent_total_atual, dias_atuais)
+                lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
                 
-                # Rentabilidade mensal apenas das taxas
-                rent_taxas_perc = calcular_rentabilidade_total(dados['liquidez_inicial'], dados['taxa_gerada'])
-                rent_mensal_taxas_atual = calcular_rentabilidade_mensal(rent_taxas_perc, dias_atuais)
+                apr_atual = calcular_apr_excel(lucro_prejuizo_atual, dados['liquidez_inicial'], dias_atuais)
+                taxas_apr_atual = calcular_apr_excel(dados['taxa_gerada'], dados['liquidez_inicial'], dias_atuais)
+                rent_mensal_atual = calcular_rentabilidade_mensal_excel(lucro_prejuizo_atual, dados['liquidez_inicial'], dias_atuais)
+                rent_mensal_taxas_atual = calcular_rentabilidade_mensal_excel(dados['taxa_gerada'], dados['liquidez_inicial'], dias_atuais)
                 
                 st.metric("Rentabilidade Total", f"{rent_total_atual:.2f}%")
                 st.metric("APR Total", f"{apr_atual:.2f}%")
@@ -375,18 +373,18 @@ if todos_dados:
             # Tabela principal de análise
             st.markdown("**💰 ANÁLISE FINANCEIRA COMPLETA**")
             
-            # Recalcular todos os valores com as fórmulas corretas
+            # Recalcular todos os valores com as fórmulas corretas do Excel
             valor_total_atual = dados['liquidez_final'] + dados['taxa_gerada']
             rent_total_atual = calcular_rentabilidade_total(dados['liquidez_inicial'], valor_total_atual)
-            apr_atual = calcular_apr(rent_total_atual, dias_atuais)
-            taxas_apr_atual = calcular_taxas_somente_apr(dados['taxa_gerada'], dados['liquidez_inicial'], dias_atuais)
-            rent_mensal_atual = calcular_rentabilidade_mensal(rent_total_atual, dias_atuais)
-            rent_taxas_perc = calcular_rentabilidade_total(dados['liquidez_inicial'], dados['taxa_gerada'])
-            rent_mensal_taxas_atual = calcular_rentabilidade_mensal(rent_taxas_perc, dias_atuais)
+            lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
+            
+            apr_atual = calcular_apr_excel(lucro_prejuizo_atual, dados['liquidez_inicial'], dias_atuais)
+            taxas_apr_atual = calcular_apr_excel(dados['taxa_gerada'], dados['liquidez_inicial'], dias_atuais)
+            rent_mensal_atual = calcular_rentabilidade_mensal_excel(lucro_prejuizo_atual, dados['liquidez_inicial'], dias_atuais)
+            rent_mensal_taxas_atual = calcular_rentabilidade_mensal_excel(dados['taxa_gerada'], dados['liquidez_inicial'], dias_atuais)
             
             # FÓRMULAS CORRETAS:
             impermanent_loss = dados['liquidez_final'] - dados['liquidez_inicial']
-            lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
             
             analise_completa = pd.DataFrame({
                 "Métrica": [

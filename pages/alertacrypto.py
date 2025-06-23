@@ -52,9 +52,9 @@ def carregar_zonas():
         with open(ARQUIVO_ZONAS, "r") as f:
             return json.load(f)
     return {
-        "BTCUSDT": {"suporte": 103000, "resistencia": 109000},
-        "ETHUSDT": {"suporte": 2500, "resistencia": 2700},
-        "SOLUSDT": {"suporte": 144, "resistencia": 155}
+        "BTCUSDT": {"suporte": 98900, "resistencia": 109000},
+        "ETHUSDT": {"suporte": 2106, "resistencia": 2700},
+        "SOLUSDT": {"suporte": 120, "resistencia": 155}
     }
 
 def salvar_zonas(zonas):
@@ -77,7 +77,7 @@ def carregar_cache():
     return [], 0
 
 def enviar_mensagem_api(mensagem, api_config):
-    """Envia mensagem usando uma API específica"""
+    """Envia mensagem usando uma API específica com melhor tratamento de erros"""
     if not mensagem.strip():
         return False
     
@@ -89,39 +89,58 @@ def enviar_mensagem_api(mensagem, api_config):
     }
     
     try:
-        r = requests.get(url, params=params, timeout=10)
-        if r.status_code == 200 and "queued" in r.text.lower():
-            print(f"✅ [{api_config['nome']}] Enviada: {mensagem[:50]}...")
-            return True
+        r = requests.get(url, params=params, timeout=15)
+        
+        # Verificar diferentes tipos de resposta de sucesso
+        if r.status_code == 200:
+            response_text = r.text.lower()
+            if any(word in response_text for word in ["queued", "sent", "ok", "success"]):
+                print(f"✅ [{api_config['nome']}] Enviada: {mensagem[:50]}...")
+                return True
+            elif "limit" in response_text:
+                print(f"⚠️ [{api_config['nome']}] Rate limit atingido")
+                return False
+            else:
+                print(f"❓ [{api_config['nome']}] Resposta: {r.text[:100]}")
+                return False
         else:
-            print(f"❌ [{api_config['nome']}] Falha: {r.status_code} - {r.text}")
+            print(f"❌ [{api_config['nome']}] HTTP {r.status_code}: {r.text[:100]}")
+            return False
+            
+    except requests.exceptions.Timeout:
+        print(f"⏰ [{api_config['nome']}] Timeout - API demorou para responder")
+        return False
     except Exception as e:
         print(f"❌ [{api_config['nome']}] Erro: {e}")
-    
-    return False
+        return False
 
 def enviar_mensagem(mensagem):
-    """Envia mensagem usando as duas APIs como backup"""
+    """Envia mensagem usando as duas APIs como backup com controle de rate limit"""
     if not mensagem.strip():
         return False
     
     # Contador de sucessos
     sucessos = 0
     apis_usadas = []
+    erros = []
     
     # Tentar enviar com cada API ativa
     for api_config in apis_whatsapp:
         if api_config["ativa"]:
-            if enviar_mensagem_api(mensagem, api_config):
+            resultado = enviar_mensagem_api(mensagem, api_config)
+            if resultado:
                 sucessos += 1
                 apis_usadas.append(api_config['nome'])
+            else:
+                erros.append(f"{api_config['nome']}: Rate limit ou erro")
     
     # Log do resultado
     if sucessos > 0:
         st.success(f"📱 Alerta enviado via: {', '.join(apis_usadas)} ({sucessos}/{len([a for a in apis_whatsapp if a['ativa']])} APIs)")
         return True
     else:
-        st.error("❌ Falha ao enviar alerta em todas as APIs WhatsApp!")
+        st.error(f"❌ Todas as APIs com problemas: {'; '.join(erros)}")
+        st.warning("⚠️ Aguarde alguns minutos antes de tentar novamente (Rate limit API)")
         return False
 
 def buscar_coingecko():
@@ -303,21 +322,23 @@ with st.expander("📱 Configuração APIs WhatsApp (Redundância)"):
         if st.button("🧪 Testar API 1", use_container_width=True):
             if apis_whatsapp[0]['ativa']:
                 msg_teste = f"🧪 Teste API 1 - {time.strftime('%H:%M:%S')}"
-                if enviar_mensagem_api(msg_teste, apis_whatsapp[0]):
-                    st.success("✅ API 1 funcionando!")
-                else:
-                    st.error("❌ API 1 com problemas")
+                with st.spinner("Testando API 1..."):
+                    if enviar_mensagem_api(msg_teste, apis_whatsapp[0]):
+                        st.success("✅ API 1 funcionando!")
+                    else:
+                        st.error("❌ API 1 com problemas (rate limit ou erro)")
             else:
                 st.warning("⚠️ API 1 está desativada")
     
     with col_test2:
         if st.button("🧪 Testar API 2", use_container_width=True):
-            if APIs_whatsapp[1]['ativa']:
+            if apis_whatsapp[1]['ativa']:
                 msg_teste = f"🧪 Teste API 2 - {time.strftime('%H:%M:%S')}"
-                if enviar_mensagem_api(msg_teste, apis_whatsapp[1]):
-                    st.success("✅ API 2 funcionando!")
-                else:
-                    st.error("❌ API 2 com problemas")
+                with st.spinner("Testando API 2..."):
+                    if enviar_mensagem_api(msg_teste, apis_whatsapp[1]):
+                        st.success("✅ API 2 funcionando!")
+                    else:
+                        st.error("❌ API 2 com problemas (rate limit ou erro)")
             else:
                 st.warning("⚠️ API 2 está desativada")
     
@@ -442,9 +463,9 @@ with st.expander("⚙️ Configurar Zonas de Suporte e Resistência"):
         
         if st.button("🔄 Restaurar Padrão", use_container_width=True):
             zonas_padrao = {
-                "BTCUSDT": {"suporte": 103000, "resistencia": 109000},
-                "ETHUSDT": {"suporte": 2500, "resistencia": 2700},
-                "SOLUSDT": {"suporte": 144, "resistencia": 155}
+                "BTCUSDT": {"suporte": 98900, "resistencia": 109000},
+                "ETHUSDT": {"suporte": 2106, "resistencia": 2700},
+                "SOLUSDT": {"suporte": 120, "resistencia": 155}
             }
             salvar_zonas(zonas_padrao)
             st.success("✅ Restaurado!")
@@ -475,22 +496,44 @@ else:
                 status = "🚀 ROMPEU RESISTÊNCIA"
                 cor = "success"
                 emoji_status = "🟢"
-                # Verificar se deve enviar alerta
+                # Verificar se deve enviar alerta (com controle de rate limit)
                 if (simbolo, "alta") not in st.session_state.enviadas:
-                    msg = f"🚨 [{nome_limpo}] ROMPEU A RESISTÊNCIA!\n💰 Preço: ${preco:,.2f}\n🎯 Resistência: ${resistencia:,.2f}\n📈 +{distancia_suporte:.1f}% do suporte\n⏰ {time.strftime('%H:%M:%S')}"
-                    if enviar_mensagem(msg):
-                        st.session_state.enviadas.add((simbolo, "alta"))
-                        st.balloons()
+                    # Só tentar enviar se não houve erro recente
+                    if "ultimo_erro_api" not in st.session_state:
+                        st.session_state.ultimo_erro_api = 0
+                    
+                    tempo_desde_erro = time.time() - st.session_state.ultimo_erro_api
+                    
+                    if tempo_desde_erro > 300:  # 5 minutos desde último erro
+                        msg = f"🚨 [{nome_limpo}] ROMPEU A RESISTÊNCIA!\n💰 Preço: ${preco:,.2f}\n🎯 Resistência: ${resistencia:,.2f}\n📈 +{distancia_suporte:.1f}% do suporte\n⏰ {time.strftime('%H:%M:%S')}"
+                        if enviar_mensagem(msg):
+                            st.session_state.enviadas.add((simbolo, "alta"))
+                            st.balloons()
+                        else:
+                            st.session_state.ultimo_erro_api = time.time()
+                    else:
+                        st.warning(f"⏰ API em cooldown. Próxima tentativa em {int(300-tempo_desde_erro)}s")
             
             elif preco < suporte:
                 status = "📉 PERDEU SUPORTE"
                 cor = "error"
                 emoji_status = "🔴"
-                # Verificar se deve enviar alerta
+                # Verificar se deve enviar alerta (com controle de rate limit)
                 if (simbolo, "baixa") not in st.session_state.enviadas:
-                    msg = f"⚠️ [{nome_limpo}] PERDEU O SUPORTE!\n💰 Preço: ${preco:,.2f}\n🎯 Suporte: ${suporte:,.2f}\n📉 {distancia_suporte:.1f}% abaixo\n⏰ {time.strftime('%H:%M:%S')}"
-                    if enviar_mensagem(msg):
-                        st.session_state.enviadas.add((simbolo, "baixa"))
+                    # Só tentar enviar se não houve erro recente
+                    if "ultimo_erro_api" not in st.session_state:
+                        st.session_state.ultimo_erro_api = 0
+                    
+                    tempo_desde_erro = time.time() - st.session_state.ultimo_erro_api
+                    
+                    if tempo_desde_erro > 300:  # 5 minutos desde último erro
+                        msg = f"⚠️ [{nome_limpo}] PERDEU O SUPORTE!\n💰 Preço: ${preco:,.2f}\n🎯 Suporte: ${suporte:,.2f}\n📉 {distancia_suporte:.1f}% abaixo\n⏰ {time.strftime('%H:%M:%S')}"
+                        if enviar_mensagem(msg):
+                            st.session_state.enviadas.add((simbolo, "baixa"))
+                        else:
+                            st.session_state.ultimo_erro_api = time.time()
+                    else:
+                        st.warning(f"⏰ API em cooldown. Próxima tentativa em {int(300-tempo_desde_erro)}s")
             
             else:
                 status = "⚖️ DENTRO DA ZONA"
