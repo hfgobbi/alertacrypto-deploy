@@ -105,6 +105,28 @@ ativo_selecionado = st.sidebar.selectbox(
     key="select_ativo"
 )
 
+# Botão de exclusão FORA do formulário (mais visível)
+if ativo_selecionado != "Criar Novo":
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🗑️ DELETAR ATIVO", key="btn_deletar", type="secondary", use_container_width=True):
+        st.session_state["confirmar_delete"] = True
+    
+    # Confirmação de exclusão
+    if st.session_state.get("confirmar_delete", False):
+        st.sidebar.error(f"⚠️ Tem certeza que deseja deletar '{ativo_selecionado}'?")
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            if st.button("✅ SIM", key="confirmar_sim", type="primary", use_container_width=True):
+                del todos_dados[ativo_selecionado]
+                salvar_dados_ativos(todos_dados)
+                st.session_state["confirmar_delete"] = False
+                st.sidebar.success(f"🗑️ Ativo deletado!")
+                st.rerun()
+        with col2:
+            if st.button("❌ NÃO", key="confirmar_nao", use_container_width=True):
+                st.session_state["confirmar_delete"] = False
+                st.rerun()
+
 # Formulário para criar/editar ativo
 with st.sidebar.form("form_ativo"):
     if ativo_selecionado == "Criar Novo":
@@ -146,29 +168,43 @@ with st.sidebar.form("form_ativo"):
     
     # Calcular valores em tempo real para exibir
     if liquidez_inicial > 0 and liquidez_final > 0:
-        permanent_loss_calc = liquidez_inicial - liquidez_final
-        lucro_prejuizo_calc = (liquidez_final + taxa_gerada) - liquidez_inicial
+        impermanent_loss_calc = liquidez_inicial - liquidez_final
+        lucro_prejuizo_calc = liquidez_inicial + liquidez_final + taxa_gerada
         valor_total_atual = liquidez_final + taxa_gerada
         rent_total_calc = calcular_rentabilidade_total(liquidez_inicial, valor_total_atual)
         
-        st.info(f"📊 **Cálculo Automático**: Permanent Loss: ${permanent_loss_calc:.2f} | Lucro/Prejuízo: ${lucro_prejuizo_calc:.2f} | Rentabilidade: {rent_total_calc:.2f}%")
+        st.info(f"📊 **Cálculo Automático**: Impermanent Loss: ${impermanent_loss_calc:.2f} | Lucro/Prejuízo: ${lucro_prejuizo_calc:.2f} | Rentabilidade: {rent_total_calc:.2f}%")
     
     st.subheader("📊 Range de Preço")
     range_inicio = st.number_input("Range Início:", value=dados_ativo.get("range_inicio", 0.0), format="%.2f", key="range_inicio")
     range_fim = st.number_input("Range Fim:", value=dados_ativo.get("range_fim", 0.0), format="%.2f", key="range_fim")
     
-    # Botões de ação
-    col1, col2 = st.columns(2)
-    with col1:
-        salvar_ativo = st.form_submit_button("💾 Salvar Ativo", use_container_width=True)
-    
-    with col2:
-        if ativo_selecionado != "Criar Novo":
-            deletar_ativo = st.form_submit_button("🗑️ Deletar Ativo", use_container_width=True, type="secondary")
-        else:
-            deletar_ativo = False
+    # Botão de salvar
+    salvar_ativo = st.form_submit_button("💾 Salvar Ativo", use_container_width=True, type="primary")
 
-    # Processar formulário
+# BOTÃO DE EXCLUSÃO - LOGO ABAIXO DO FORMULÁRIO
+if ativo_selecionado != "Criar Novo":
+    st.sidebar.markdown("### 🗑️ Excluir Ativo")
+    if st.sidebar.button("🗑️ DELETAR ATIVO SELECIONADO", key="btn_deletar", type="secondary", use_container_width=True):
+        st.session_state["confirmar_delete"] = True
+    
+    # Confirmação de exclusão
+    if st.session_state.get("confirmar_delete", False):
+        st.sidebar.error(f"⚠️ **ATENÇÃO!** Deletar '{ativo_selecionado}'?")
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            if st.sidebar.button("✅ SIM, DELETAR", key="confirmar_sim", type="primary", use_container_width=True):
+                del todos_dados[ativo_selecionado]
+                salvar_dados_ativos(todos_dados)
+                st.session_state["confirmar_delete"] = False
+                st.sidebar.success(f"🗑️ Ativo '{ativo_selecionado}' deletado!")
+                st.rerun()
+        with col2:
+            if st.sidebar.button("❌ CANCELAR", key="confirmar_nao", use_container_width=True):
+                st.session_state["confirmar_delete"] = False
+                st.rerun()
+
+# Processar formulário de salvamento
 if salvar_ativo and nome_ativo:
     # Calcular valores automaticamente
     data_inicio_str = data_inicio.strftime("%d/%m/%Y")
@@ -181,9 +217,12 @@ if salvar_ativo and nome_ativo:
     
     dias_no_range = calcular_dias_no_range(data_inicio_str)
     
-    # Calcular permanent loss e lucro/prejuízo
-    permanent_loss = liquidez_inicial - liquidez_final if liquidez_final > 0 else 0
-    lucro_prejuizo = (liquidez_final + taxa_gerada) - liquidez_inicial
+    # FÓRMULAS CORRETAS CONFORME SOLICITADO:
+    # Impermanent Loss = diferença entre valor inicial e valor final (sem considerar taxas)
+    impermanent_loss = liquidez_inicial - liquidez_final
+    
+    # Lucro/Prejuízo = liquidez inicial + liquidez final + taxas geradas
+    lucro_prejuizo = liquidez_inicial + liquidez_final + taxa_gerada
     
     # Calcular rentabilidade total (incluindo taxas)
     valor_total_atual = liquidez_final + taxa_gerada
@@ -221,7 +260,7 @@ if salvar_ativo and nome_ativo:
         "liquidez_final": liquidez_final,
         "taxa_gerada": taxa_gerada,
         "lucro_prejuizo": lucro_prejuizo,
-        "permanent_loss": permanent_loss,
+        "impermanent_loss": impermanent_loss,
         "rentabilidade_total": f"{rentabilidade_total:.2f}%",
         "apr_total": f"{apr_total:.2f}%",
         "taxas_somente": f"{taxas_somente_apr:.2f}%",
@@ -235,12 +274,6 @@ if salvar_ativo and nome_ativo:
     todos_dados[nome_ativo] = novo_ativo
     salvar_dados_ativos(todos_dados)
     st.sidebar.success(f"✅ Ativo '{nome_ativo}' salvo com sucesso!")
-    st.rerun()
-
-if deletar_ativo and ativo_selecionado != "Criar Novo":
-    del todos_dados[ativo_selecionado]
-    salvar_dados_ativos(todos_dados)
-    st.sidebar.success(f"🗑️ Ativo '{ativo_selecionado}' deletado!")
     st.rerun()
 
 # Exibir ativos existentes
@@ -272,14 +305,14 @@ if todos_dados:
                 st.metric("Liquidez Final", f"${dados['liquidez_final']:.2f}")
                 st.metric("Taxa Gerada", f"${dados['taxa_gerada']:.2f}")
                 
-                # Calcular lucro/prejuízo atualizado
-                lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
-                cor_lucro = "normal" if lucro_prejuizo_atual >= 0 else "inverse"
-                st.metric("Lucro/Prejuízo", f"${lucro_prejuizo_atual:.2f}", delta=None)
+                # FÓRMULAS CORRETAS:
+                # Lucro/Prejuízo = liquidez inicial + liquidez final + taxas geradas
+                lucro_prejuizo_atual = dados['liquidez_inicial'] + dados['liquidez_final'] + dados['taxa_gerada']
+                st.metric("Lucro/Prejuízo", f"${lucro_prejuizo_atual:.2f}")
                 
-                # Permanent Loss
-                permanent_loss = dados['liquidez_inicial'] - dados['liquidez_final']
-                st.metric("Permanent Loss", f"${permanent_loss:.2f}")
+                # Impermanent Loss = liquidez inicial - liquidez final
+                impermanent_loss = dados['liquidez_inicial'] - dados['liquidez_final']
+                st.metric("Impermanent Loss", f"${impermanent_loss:.2f}")
             
             with col3:
                 st.subheader("📈 Rentabilidade")
@@ -327,7 +360,7 @@ if todos_dados:
             # Tabela principal de análise
             st.markdown("**💰 ANÁLISE FINANCEIRA COMPLETA**")
             
-            # Recalcular todos os valores
+            # Recalcular todos os valores com as fórmulas corretas
             valor_total_atual = dados['liquidez_final'] + dados['taxa_gerada']
             rent_total_atual = calcular_rentabilidade_total(dados['liquidez_inicial'], valor_total_atual)
             apr_atual = calcular_apr(rent_total_atual, dias_atuais)
@@ -335,15 +368,17 @@ if todos_dados:
             rent_mensal_atual = calcular_rentabilidade_mensal(rent_total_atual, dias_atuais)
             rent_taxas_perc = calcular_rentabilidade_total(dados['liquidez_inicial'], dados['taxa_gerada'])
             rent_mensal_taxas_atual = calcular_rentabilidade_mensal(rent_taxas_perc, dias_atuais)
-            permanent_loss = dados['liquidez_inicial'] - dados['liquidez_final']
-            lucro_prejuizo_atual = valor_total_atual - dados['liquidez_inicial']
+            
+            # FÓRMULAS CORRETAS:
+            impermanent_loss = dados['liquidez_inicial'] - dados['liquidez_final']
+            lucro_prejuizo_atual = dados['liquidez_inicial'] + dados['liquidez_final'] + dados['taxa_gerada']
             
             analise_completa = pd.DataFrame({
                 "Métrica": [
                     "Liquidez Inicial",
                     "Liquidez Final", 
                     "Taxa Gerada",
-                    "Permanent Loss",
+                    "Impermanent Loss",
                     "Lucro/Prejuízo Total",
                     "Rentabilidade Total",
                     "APR Total",
@@ -356,7 +391,7 @@ if todos_dados:
                     f"${dados['liquidez_inicial']:.2f}",
                     f"${dados['liquidez_final']:.2f}",
                     f"${dados['taxa_gerada']:.2f}",
-                    f"${permanent_loss:.2f}",
+                    f"${impermanent_loss:.2f}",
                     f"${lucro_prejuizo_atual:.2f}",
                     f"{rent_total_atual:.2f}%",
                     f"{apr_atual:.2f}%",
@@ -372,8 +407,8 @@ if todos_dados:
             # Observações importantes
             st.subheader("📝 Observações")
             st.warning(
-                "🔄 **Permanent Loss**: Lembre-se que quando o preço do ativo voltar ao range ideal, "
-                "o lucro pode se tornar 100% novamente. O Permanent Loss é temporário enquanto os ativos "
+                "🔄 **Impermanent Loss**: Lembre-se que quando o preço do ativo voltar ao range ideal, "
+                "o lucro pode se tornar 100% novamente. O Impermanent Loss é temporário enquanto os ativos "
                 "estão fora do range de preço configurado."
             )
             

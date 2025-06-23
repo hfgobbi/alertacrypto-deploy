@@ -78,5 +78,32 @@
         "range_inicio": 130.0,
         "range_fim": 160.0,
         "ultima_atualizacao": "22/06/2025 20:21:48"
+    },
+    "t5este": {
+        "data_inicio": "23/06/2025",
+        "hora_inicio": "09:31",
+        "timestamp": "23/06/2025 09:31",
+        "dias_no_range": 0.4,
+        "token_a": "SOL",
+        "token_b": "USDC",
+        "quantidade_a": 0.0,
+        "usd_a": 0.0,
+        "proporcao_a": "0%",
+        "quantidade_b": 0.0,
+        "usd_b": 0.0,
+        "proporcao_b": "0%",
+        "liquidez_inicial": 0.0,
+        "liquidez_final": 0.0,
+        "taxa_gerada": 0.0,
+        "lucro_prejuizo": 0.0,
+        "impermanent_loss": 0.0,
+        "rentabilidade_total": "0.00%",
+        "apr_total": "0.00%",
+        "taxas_somente": "0.00%",
+        "rent_mensal_total": "0.00%",
+        "rent_mensal_taxas": "0.00%",
+        "range_inicio": 0.0,
+        "range_fim": 0.0,
+        "ultima_atualizacao": "23/06/2025 09:31:57"
     }
 }
