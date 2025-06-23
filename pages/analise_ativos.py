@@ -146,12 +146,17 @@ with st.sidebar.form("form_ativo"):
     
     # Calcular valores em tempo real para exibir
     if liquidez_inicial > 0 and liquidez_final > 0:
-        impermanent_loss_calc = liquidez_inicial - liquidez_final
+        impermanent_loss_calc = liquidez_final - liquidez_inicial
         lucro_prejuizo_calc = (liquidez_final + taxa_gerada) - liquidez_inicial
         valor_total_atual = liquidez_final + taxa_gerada
         rent_total_calc = calcular_rentabilidade_total(liquidez_inicial, valor_total_atual)
         
+        # Mostrar cálculo da composição também
+        total_a = quantidade_a * usd_a
+        total_b = quantidade_b * usd_b
+        
         st.info(f"📊 **Cálculo Automático**: Impermanent Loss: ${impermanent_loss_calc:.2f} | Lucro/Prejuízo: ${lucro_prejuizo_calc:.2f} | Rentabilidade: {rent_total_calc:.2f}%")
+        st.info(f"🪙 **Composição**: {token_a}: ${total_a:.2f} | {token_b}: ${total_b:.2f} | Total: ${total_a + total_b:.2f}")
     
     st.subheader("📊 Range de Preço")
     range_inicio = st.number_input("Range Início:", value=dados_ativo.get("range_inicio", 0.0), format="%.2f", key="range_inicio")
@@ -216,8 +221,8 @@ if salvar_ativo and nome_ativo:
     dias_no_range = calcular_dias_no_range(data_inicio_str)
     
     # FÓRMULAS CORRETAS RESTAURADAS:
-    # Impermanent Loss = liquidez inicial - liquidez final
-    impermanent_loss = liquidez_inicial - liquidez_final
+    # Impermanent Loss = liquidez final - liquidez inicial
+    impermanent_loss = liquidez_final - liquidez_inicial
     
     # Lucro/Prejuízo = (liquidez final + taxa gerada) - liquidez inicial
     lucro_prejuizo = (liquidez_final + taxa_gerada) - liquidez_inicial
@@ -235,10 +240,13 @@ if salvar_ativo and nome_ativo:
     rent_taxas_perc = calcular_rentabilidade_total(liquidez_inicial, taxa_gerada)
     rent_mensal_taxas = calcular_rentabilidade_mensal(rent_taxas_perc, dias_no_range)
     
-    # Calcular proporções
-    total_usd = usd_a + usd_b
-    proporcao_a = f"{(usd_a / total_usd * 100):.2f}%" if total_usd > 0 else "0%"
-    proporcao_b = f"{(usd_b / total_usd * 100):.2f}%" if total_usd > 0 else "0%"
+    # Calcular proporções CORRETAS baseadas no total USD de cada token
+    total_usd_token_a = quantidade_a * usd_a  # Quantidade × Valor USD
+    total_usd_token_b = quantidade_b * usd_b  # Quantidade × Valor USD
+    total_usd_geral = total_usd_token_a + total_usd_token_b
+    
+    proporcao_a = f"{(total_usd_token_a / total_usd_geral * 100):.2f}%" if total_usd_geral > 0 else "0%"
+    proporcao_b = f"{(total_usd_token_b / total_usd_geral * 100):.2f}%" if total_usd_geral > 0 else "0%"
     
     # Salvar dados
     novo_ativo = {
@@ -250,6 +258,9 @@ if salvar_ativo and nome_ativo:
         "token_b": token_b,
         "quantidade_a": quantidade_a,
         "usd_a": usd_a,
+        "total_usd_token_a": total_usd_token_a,
+        "usd_b": usd_b,
+        "total_usd_token_b": total_usd_token_b,
         "proporcao_a": proporcao_a,
         "quantidade_b": quantidade_b,
         "usd_b": usd_b,
@@ -308,8 +319,8 @@ if todos_dados:
                 lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
                 st.metric("Lucro/Prejuízo", f"${lucro_prejuizo_atual:.2f}")
                 
-                # Impermanent Loss = liquidez inicial - liquidez final
-                impermanent_loss = dados['liquidez_inicial'] - dados['liquidez_final']
+                # Impermanent Loss = liquidez final - liquidez inicial
+                impermanent_loss = dados['liquidez_final'] - dados['liquidez_inicial']
                 st.metric("Impermanent Loss", f"${impermanent_loss:.2f}")
             
             with col3:
@@ -347,10 +358,16 @@ if todos_dados:
             
             with col2:
                 st.markdown("**🪙 COMPOSIÇÃO**")
+                
+                # Calcular totais USD corretos para cada token
+                total_usd_a = dados['quantidade_a'] * dados.get('usd_a', 0)
+                total_usd_b = dados['quantidade_b'] * dados.get('usd_b', 0)
+                
                 composicao_df = pd.DataFrame({
                     "Token": [dados["token_a"], dados["token_b"]],
                     "Quantidade": [f"{dados['quantidade_a']:.4f}", f"{dados['quantidade_b']:.4f}"],
-                    "USD": [f"${dados['usd_a']:.2f}", f"${dados['usd_b']:.2f}"],
+                    "Valor USD Unitário": [f"${dados.get('usd_a', 0):.2f}", f"${dados.get('usd_b', 0):.2f}"],
+                    "Total USD": [f"${total_usd_a:.2f}", f"${total_usd_b:.2f}"],
                     "Proporção": [dados["proporcao_a"], dados["proporcao_b"]]
                 })
                 st.dataframe(composicao_df, hide_index=True, use_container_width=True)
@@ -367,8 +384,8 @@ if todos_dados:
             rent_taxas_perc = calcular_rentabilidade_total(dados['liquidez_inicial'], dados['taxa_gerada'])
             rent_mensal_taxas_atual = calcular_rentabilidade_mensal(rent_taxas_perc, dias_atuais)
             
-            # FÓRMULAS CORRETAS RESTAURADAS:
-            impermanent_loss = dados['liquidez_inicial'] - dados['liquidez_final']
+            # FÓRMULAS CORRETAS:
+            impermanent_loss = dados['liquidez_final'] - dados['liquidez_inicial']
             lucro_prejuizo_atual = (dados['liquidez_final'] + dados['taxa_gerada']) - dados['liquidez_inicial']
             
             analise_completa = pd.DataFrame({
