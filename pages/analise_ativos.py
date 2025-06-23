@@ -164,7 +164,7 @@ with st.sidebar.form("form_ativo"):
     
     with col2:
         if ativo_selecionado != "Criar Novo":
-            deletar_ativo = st.form_submit_button("🗑️ Deletar Ativo", use_container_width=True)
+            deletar_ativo = st.form_submit_button("🗑️ Deletar Ativo", use_container_width=True, type="secondary")
         else:
             deletar_ativo = False
 
