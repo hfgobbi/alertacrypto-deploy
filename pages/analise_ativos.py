@@ -105,28 +105,6 @@ ativo_selecionado = st.sidebar.selectbox(
     key="select_ativo"
 )
 
-# Botão de exclusão FORA do formulário (mais visível)
-if ativo_selecionado != "Criar Novo":
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🗑️ DELETAR ATIVO", key="btn_deletar", type="secondary", use_container_width=True):
-        st.session_state["confirmar_delete"] = True
-    
-    # Confirmação de exclusão
-    if st.session_state.get("confirmar_delete", False):
-        st.sidebar.error(f"⚠️ Tem certeza que deseja deletar '{ativo_selecionado}'?")
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            if st.button("✅ SIM", key="confirmar_sim", type="primary", use_container_width=True):
-                del todos_dados[ativo_selecionado]
-                salvar_dados_ativos(todos_dados)
-                st.session_state["confirmar_delete"] = False
-                st.sidebar.success(f"🗑️ Ativo deletado!")
-                st.rerun()
-        with col2:
-            if st.button("❌ NÃO", key="confirmar_nao", use_container_width=True):
-                st.session_state["confirmar_delete"] = False
-                st.rerun()
-
 # Formulário para criar/editar ativo
 with st.sidebar.form("form_ativo"):
     if ativo_selecionado == "Criar Novo":
@@ -182,29 +160,49 @@ with st.sidebar.form("form_ativo"):
     # Botão de salvar
     salvar_ativo = st.form_submit_button("💾 Salvar Ativo", use_container_width=True, type="primary")
 
-# BOTÃO DE EXCLUSÃO - LOGO ABAIXO DO FORMULÁRIO
+# BOTÃO DE EXCLUSÃO - DEFINITIVO E FUNCIONAL
 if ativo_selecionado != "Criar Novo":
-    st.sidebar.markdown("### 🗑️ Excluir Ativo")
-    if st.sidebar.button("🗑️ DELETAR ATIVO SELECIONADO", key="btn_deletar", type="secondary", use_container_width=True):
-        st.session_state["confirmar_delete"] = True
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🗑️ Excluir Ativo")
     
-    # Confirmação de exclusão
-    if st.session_state.get("confirmar_delete", False):
-        st.sidebar.error(f"⚠️ **ATENÇÃO!** Deletar '{ativo_selecionado}'?")
+    # Usar session_state para controlar o estado
+    if "mostrar_confirmacao" not in st.session_state:
+        st.session_state.mostrar_confirmacao = False
+    
+    if not st.session_state.mostrar_confirmacao:
+        # Botão principal de exclusão
+        if st.sidebar.button(
+            f"🗑️ EXCLUIR {ativo_selecionado}", 
+            key="btn_excluir_principal",
+            use_container_width=True,
+            type="secondary"
+        ):
+            st.session_state.mostrar_confirmacao = True
+            st.rerun()
+    
+    else:
+        # Mostrar confirmação
+        st.sidebar.error(f"⚠️ CONFIRMAR EXCLUSÃO DE '{ativo_selecionado}'?")
+        
+        # Botões de confirmação em colunas
         col1, col2 = st.sidebar.columns(2)
+        
         with col1:
-            if st.sidebar.button("✅ SIM, DELETAR", key="confirmar_sim", type="primary", use_container_width=True):
-                del todos_dados[ativo_selecionado]
-                salvar_dados_ativos(todos_dados)
-                st.session_state["confirmar_delete"] = False
-                st.sidebar.success(f"🗑️ Ativo '{ativo_selecionado}' deletado!")
-                st.rerun()
+            if st.sidebar.button("✅ SIM", key="confirmar_sim", type="primary", use_container_width=True):
+                # Executar exclusão
+                if ativo_selecionado in todos_dados:
+                    del todos_dados[ativo_selecionado]
+                    salvar_dados_ativos(todos_dados)
+                    st.session_state.mostrar_confirmacao = False
+                    st.sidebar.success(f"✅ {ativo_selecionado} foi excluído!")
+                    st.rerun()
+        
         with col2:
-            if st.sidebar.button("❌ CANCELAR", key="confirmar_nao", use_container_width=True):
-                st.session_state["confirmar_delete"] = False
+            if st.sidebar.button("❌ NÃO", key="cancelar_nao", use_container_width=True):
+                st.session_state.mostrar_confirmacao = False
                 st.rerun()
 
-# Processar formulário de salvamento
+# Processar salvamento do formulário
 if salvar_ativo and nome_ativo:
     # Calcular valores automaticamente
     data_inicio_str = data_inicio.strftime("%d/%m/%Y")
@@ -217,7 +215,7 @@ if salvar_ativo and nome_ativo:
     
     dias_no_range = calcular_dias_no_range(data_inicio_str)
     
-    # FÓRMULAS CORRETAS CONFORME SOLICITADO:
+    # FÓRMULAS CORRETAS:
     # Impermanent Loss = diferença entre valor inicial e valor final (sem considerar taxas)
     impermanent_loss = liquidez_inicial - liquidez_final
     
